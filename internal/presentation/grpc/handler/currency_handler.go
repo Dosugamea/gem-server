@@ -14,6 +14,7 @@ import (
 	"gem-server/internal/domain/redemption_code"
 	"gem-server/internal/domain/transaction"
 	"gem-server/internal/presentation/grpc/pb"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

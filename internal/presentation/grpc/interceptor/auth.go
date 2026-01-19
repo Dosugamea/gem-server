@@ -6,6 +6,7 @@ import (
 
 	"gem-server/internal/infrastructure/config"
 	otelinfra "gem-server/internal/infrastructure/observability/otel"
+
 	"github.com/golang-jwt/jwt/v5"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

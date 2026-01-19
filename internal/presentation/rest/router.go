@@ -140,7 +140,7 @@ func setupPaymentHandlerRoutes(e *echo.Echo) {
 		scheme := c.Scheme()
 		host := c.Request().Host
 		manifestURL := fmt.Sprintf("%s://%s/pay/payment-manifest.json", scheme, host)
-		
+
 		// Payment Method ManifestへのリンクをHTTPヘッダーに設定
 		c.Response().Header().Set("Link", fmt.Sprintf(`<%s>; rel="payment-method-manifest"`, manifestURL))
 		// 決済アプリウィンドウのHTMLを返す

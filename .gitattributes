@@ -1,0 +1,58 @@
+# すべてのファイルをLFに統一
+* text=auto eol=lf
+
+# バイナリファイルは改行コード変換を無効化
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+
+# Go関連のファイルは明示的にLF
+*.go text eol=lf
+*.mod text eol=lf
+*.sum text eol=lf
+
+# 設定ファイル
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.env text eol=lf
+*.env.* text eol=lf
+
+# ドキュメント
+*.md text eol=lf
+*.txt text eol=lf
+*.rst text eol=lf
+
+# スクリプト
+*.ps1 text eol=lf
+*.sh text eol=lf
+*.bat text eol=lf
+*.cmd text eol=lf
+
+# Web関連
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.jsx text eol=lf
+
+# SQL
+*.sql text eol=lf
+
+# Makefile（LFを使用）
+Makefile text eol=lf
+
+# Git関連
+.gitignore text eol=lf
+.gitattributes text eol=lf

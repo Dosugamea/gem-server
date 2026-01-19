@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	authapp "gem-server/internal/application/auth"
 	redemptionapp "gem-server/internal/application/code_redemption"
 	currencyapp "gem-server/internal/application/currency"
 	historyapp "gem-server/internal/application/history"
@@ -81,6 +82,8 @@ func main() {
 	currencyService := service.NewCurrencyService(currencyRepo)
 
 	// アプリケーションサービスの初期化
+	authAppService := authapp.NewAuthApplicationService(&cfg.JWT, logger)
+
 	currencyAppService := currencyapp.NewCurrencyApplicationService(
 		currencyRepo,
 		transactionRepo,
@@ -118,6 +121,7 @@ func main() {
 	router, err := rest.NewRouter(
 		cfg,
 		logger,
+		authAppService,
 		currencyAppService,
 		paymentAppService,
 		redemptionAppService,

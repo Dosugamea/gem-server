@@ -3,6 +3,7 @@ package rest
 import (
 	"fmt"
 
+	authapp "gem-server/internal/application/auth"
 	redemptionapp "gem-server/internal/application/code_redemption"
 	currencyapp "gem-server/internal/application/currency"
 	historyapp "gem-server/internal/application/history"
@@ -23,12 +24,14 @@ type Router struct {
 	paymentHandler    *handler.PaymentHandler
 	redemptionHandler *handler.CodeRedemptionHandler
 	historyHandler    *handler.HistoryHandler
+	authHandler       *handler.AuthHandler
 }
 
 // NewRouter 新しいRouterを作成
 func NewRouter(
 	cfg *config.Config,
 	logger *otelinfra.Logger,
+	authService *authapp.AuthApplicationService,
 	currencyService *currencyapp.CurrencyApplicationService,
 	paymentService *paymentapp.PaymentApplicationService,
 	redemptionService *redemptionapp.CodeRedemptionApplicationService,
@@ -45,13 +48,14 @@ func NewRouter(
 	setupMiddleware(e, cfg, logger)
 
 	// ハンドラーの作成
+	authHandler := handler.NewAuthHandler(authService)
 	currencyHandler := handler.NewCurrencyHandler(currencyService)
 	paymentHandler := handler.NewPaymentHandler(paymentService)
 	redemptionHandler := handler.NewCodeRedemptionHandler(redemptionService)
 	historyHandler := handler.NewHistoryHandler(historyService)
 
 	// ルーティングの設定
-	setupRoutes(e, cfg, logger, currencyHandler, paymentHandler, redemptionHandler, historyHandler)
+	setupRoutes(e, cfg, logger, authHandler, currencyHandler, paymentHandler, redemptionHandler, historyHandler)
 
 	// Swagger UI / ReDoc統合
 	SetupSwagger(e)
@@ -62,6 +66,7 @@ func NewRouter(
 		paymentHandler:    paymentHandler,
 		redemptionHandler: redemptionHandler,
 		historyHandler:    historyHandler,
+		authHandler:       authHandler,
 	}, nil
 }
 
@@ -95,6 +100,7 @@ func setupRoutes(
 	e *echo.Echo,
 	cfg *config.Config,
 	logger *otelinfra.Logger,
+	authHandler *handler.AuthHandler,
 	currencyHandler *handler.CurrencyHandler,
 	paymentHandler *handler.PaymentHandler,
 	redemptionHandler *handler.CodeRedemptionHandler,
@@ -105,6 +111,9 @@ func setupRoutes(
 
 	// API v1グループ
 	api := e.Group("/api/v1")
+
+	// 認証エンドポイント（認証不要）
+	api.POST("/auth/token", authHandler.GenerateToken)
 
 	// 認証が必要なエンドポイント
 	authGroup := api.Group("", restmiddleware.AuthMiddleware(&cfg.JWT, logger))

@@ -10,6 +10,30 @@ servers:
     description: Production server
 
 paths:
+  /auth/token:
+    post:
+      summary: JWTトークン生成
+      operationId: generateToken
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateTokenRequest"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateTokenResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   /users/{user_id}/balance:
     get:
       summary: 通貨残高取得
@@ -249,6 +273,29 @@ components:
       bearerFormat: JWT
 
   schemas:
+    GenerateTokenRequest:
+      type: object
+      required:
+        - user_id
+      properties:
+        user_id:
+          type: string
+          description: ユーザーID
+
+    GenerateTokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWTトークン
+        expires_in:
+          type: integer
+          description: 有効期限（秒）
+        token_type:
+          type: string
+          description: トークンタイプ（Bearer）
+          example: Bearer
+
     BalanceResponse:
       type: object
       properties:

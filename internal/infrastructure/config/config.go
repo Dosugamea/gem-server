@@ -109,7 +109,7 @@ func Load() (*Config, error) {
 			Enabled:         getEnvAsBool("OTEL_ENABLED", true),
 			ServiceName:     getEnv("OTEL_SERVICE_NAME", "gem-server"),
 			ServiceVersion:  getEnv("OTEL_SERVICE_VERSION", "1.0.0"),
-			OTLPEndpoint:    getEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4318"),
+			OTLPEndpoint:    getEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "localhost:4318"),
 			OTLPInsecure:    getEnvAsBool("OTEL_EXPORTER_OTLP_INSECURE", true),
 			TraceExporter:   getEnv("OTEL_TRACES_EXPORTER", "otlp"),
 			MetricsExporter: getEnv("OTEL_METRICS_EXPORTER", "otlp"),

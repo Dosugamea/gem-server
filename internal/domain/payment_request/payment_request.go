@@ -30,6 +30,11 @@ const (
 	PaymentRequestStatusCancelled PaymentRequestStatus = "cancelled" // キャンセル
 )
 
+// String 文字列表現を返す
+func (prs PaymentRequestStatus) String() string {
+	return string(prs)
+}
+
 // NewPaymentRequest 新しいPaymentRequestエンティティを作成
 func NewPaymentRequest(
 	paymentRequestID string,

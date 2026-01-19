@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
 	"gem-server/internal/infrastructure/config"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // DB データベース接続とトランザクション管理を提供

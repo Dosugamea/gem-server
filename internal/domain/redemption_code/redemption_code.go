@@ -157,3 +157,13 @@ func (rc *RedemptionCode) Expire() {
 	rc.status = CodeStatusExpired
 	rc.updatedAt = time.Now()
 }
+
+// SetCurrentUses 現在の使用回数を設定（リポジトリから読み込んだ際に使用）
+func (rc *RedemptionCode) SetCurrentUses(uses int) {
+	rc.currentUses = uses
+}
+
+// SetStatus ステータスを設定（リポジトリから読み込んだ際に使用）
+func (rc *RedemptionCode) SetStatus(status CodeStatus) {
+	rc.status = status
+}

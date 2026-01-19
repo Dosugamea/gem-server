@@ -98,6 +98,14 @@ func TestMetricsMiddleware_RecordsClientError(t *testing.T) {
 	require.NoError(t, err)
 
 	e := echo.New()
+	e.HTTPErrorHandler = func(err error, c echo.Context) {
+		httpErr := echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		if he, ok := err.(*echo.HTTPError); ok {
+			httpErr = he
+		}
+		c.Response().Status = httpErr.Code
+		c.Response().WriteHeader(httpErr.Code)
+	}
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -110,6 +118,9 @@ func TestMetricsMiddleware_RecordsClientError(t *testing.T) {
 
 	err = handler(c)
 	// EchoのHTTPErrorはエラーハンドラーで処理されるため、エラーが返される
+	if err != nil {
+		e.HTTPErrorHandler(err, c)
+	}
 	assert.Error(t, err)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
@@ -122,6 +133,14 @@ func TestMetricsMiddleware_RecordsServerError(t *testing.T) {
 	require.NoError(t, err)
 
 	e := echo.New()
+	e.HTTPErrorHandler = func(err error, c echo.Context) {
+		httpErr := echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		if he, ok := err.(*echo.HTTPError); ok {
+			httpErr = he
+		}
+		c.Response().Status = httpErr.Code
+		c.Response().WriteHeader(httpErr.Code)
+	}
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -134,6 +153,9 @@ func TestMetricsMiddleware_RecordsServerError(t *testing.T) {
 
 	err = handler(c)
 	// EchoのHTTPErrorはエラーハンドラーで処理されるため、エラーが返される
+	if err != nil {
+		e.HTTPErrorHandler(err, c)
+	}
 	assert.Error(t, err)
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 }
@@ -202,6 +224,14 @@ func TestMetricsMiddleware_RecordsErrorFor4xx(t *testing.T) {
 	for _, statusCode := range statusCodes {
 		t.Run(http.StatusText(statusCode), func(t *testing.T) {
 			e := echo.New()
+			e.HTTPErrorHandler = func(err error, c echo.Context) {
+				httpErr := echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+				if he, ok := err.(*echo.HTTPError); ok {
+					httpErr = he
+				}
+				c.Response().Status = httpErr.Code
+				c.Response().WriteHeader(httpErr.Code)
+			}
 			req := httptest.NewRequest(http.MethodGet, "/test", nil)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
@@ -214,6 +244,9 @@ func TestMetricsMiddleware_RecordsErrorFor4xx(t *testing.T) {
 
 			err = handler(c)
 			// EchoのHTTPErrorはエラーハンドラーで処理されるため、エラーが返される
+			if err != nil {
+				e.HTTPErrorHandler(err, c)
+			}
 			assert.Error(t, err)
 			assert.Equal(t, statusCode, rec.Code)
 		})
@@ -237,6 +270,14 @@ func TestMetricsMiddleware_RecordsErrorFor5xx(t *testing.T) {
 	for _, statusCode := range statusCodes {
 		t.Run(http.StatusText(statusCode), func(t *testing.T) {
 			e := echo.New()
+			e.HTTPErrorHandler = func(err error, c echo.Context) {
+				httpErr := echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+				if he, ok := err.(*echo.HTTPError); ok {
+					httpErr = he
+				}
+				c.Response().Status = httpErr.Code
+				c.Response().WriteHeader(httpErr.Code)
+			}
 			req := httptest.NewRequest(http.MethodGet, "/test", nil)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
@@ -249,6 +290,9 @@ func TestMetricsMiddleware_RecordsErrorFor5xx(t *testing.T) {
 
 			err = handler(c)
 			// EchoのHTTPErrorはエラーハンドラーで処理されるため、エラーが返される
+			if err != nil {
+				e.HTTPErrorHandler(err, c)
+			}
 			assert.Error(t, err)
 			assert.Equal(t, statusCode, rec.Code)
 		})

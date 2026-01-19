@@ -232,8 +232,32 @@ GitHubリポジトリに以下のシークレットを設定してください�
 
 詳細なドキュメントは以下のディレクトリを参照してください：
 
+### 開発者向けドキュメント
+
+- [セットアップガイド](docs/SETUP.md) - 開発環境のセットアップ手順
+- [開発ガイドライン](docs/DEVELOPMENT.md) - コーディング規約と開発フロー
+- [API使用例](docs/api-examples.md) - APIの使用例とサンプルコード
+
+### 運用ドキュメント
+
+- [デプロイ手順書](docs/DEPLOYMENT.md) - 本番環境へのデプロイ手順
+- [監視・アラート設定ガイド](docs/MONITORING.md) - 監視とアラートの設定
+- [トラブルシューティングガイド](docs/TROUBLESHOOTING.md) - よくある問題と解決方法
+
+### 設計ドキュメント
+
 - `.cursor/plans/` - 実装計画書と設計ドキュメント
-- `docs/` - API仕様書など
+  - [システム概要](.cursor/plans/doc-01-システム概要.md)
+  - [アーキテクチャ](.cursor/plans/doc-02-アーキテクチャ.md)
+  - [データベース設計](.cursor/plans/doc-03-データベース設計.md)
+  - [API仕様](.cursor/plans/doc-04-API仕様.md)
+  - [PaymentRequest API実装](.cursor/plans/doc-05-PaymentRequest-API-プロバイダー実装.md)
+
+### APIドキュメント
+
+- **Swagger UI**: http://localhost:8080/swagger
+- **ReDoc**: http://localhost:8080/redoc
+- **OpenAPI仕様**: http://localhost:8080/openapi.yaml
 
 ## ライセンス
 

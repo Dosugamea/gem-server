@@ -5,6 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 // SetupSwagger Swagger UI / ReDoc統合を設定
@@ -15,41 +16,11 @@ func SetupSwagger(e *echo.Echo) {
 		return c.Blob(200, "application/x-yaml", openapi.Spec)
 	})
 
-	// Swagger UI用の静的ファイル配信（簡易版）
-	// 実際の実装では、swaggo/echo-swaggerなどのライブラリを使用することを推奨
-	e.GET("/swagger", func(c echo.Context) error {
-		return c.HTML(200, `
-<!DOCTYPE html>
-<html>
-<head>
-	<title>API Documentation</title>
-	<link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.0.0/swagger-ui.css" />
-	<style>
-		html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
-		*, *:before, *:after { box-sizing: inherit; }
-		body { margin:0; background: #fafafa; }
-	</style>
-</head>
-<body>
-	<div id="swagger-ui"></div>
-	<script src="https://unpkg.com/swagger-ui-dist@5.0.0/swagger-ui-bundle.js"></script>
-	<script>
-		window.onload = function() {
-			SwaggerUIBundle({
-				url: "/openapi.yaml",
-				dom_id: '#swagger-ui',
-				presets: [
-					SwaggerUIBundle.presets.apis,
-					SwaggerUIBundle.presets.standalone
-				],
-				layout: "StandaloneLayout"
-			});
-		};
-	</script>
-</body>
-</html>
-		`)
-	})
+	// Swagger UI（swaggo/echo-swaggerを使用）
+	// 既存のOpenAPI仕様ファイル（/openapi.yaml）を使用
+	e.GET("/swagger/*", echoSwagger.EchoWrapHandler(
+		echoSwagger.URL("/openapi.yaml"),
+	))
 
 	// ReDoc用のHTML
 	e.GET("/redoc", func(c echo.Context) error {

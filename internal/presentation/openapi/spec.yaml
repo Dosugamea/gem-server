@@ -1,0 +1,506 @@
+openapi: 3.0.3
+info:
+  title: Virtual Currency Management API
+  version: 1.0.0
+  description: PaymentRequest API対応の仮想通貨管理API
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+  - url: https://api.yourdomain.com/api/v1
+    description: Production server
+
+paths:
+  /users/{user_id}/balance:
+    get:
+      summary: 通貨残高取得
+      operationId: getBalance
+      tags:
+        - Currency
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ユーザーID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /users/{user_id}/grant:
+    post:
+      summary: 通貨付与
+      operationId: grantCurrency
+      tags:
+        - Currency
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ユーザーID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrantResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /users/{user_id}/consume:
+    post:
+      summary: 通貨消費
+      operationId: consumeCurrency
+      tags:
+        - Currency
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ユーザーID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsumeRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: 残高不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /payment/process:
+    post:
+      summary: 決済処理
+      operationId: processPayment
+      tags:
+        - Payment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessPaymentRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessPaymentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: 残高不足または二重決済
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /codes/redeem:
+    post:
+      summary: コード引き換え
+      operationId: redeemCode
+      tags:
+        - CodeRedemption
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RedeemCodeRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RedeemCodeResponse'
+        '400':
+          description: 無効なコードまたは既に使用済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: コードが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /users/{user_id}/transactions:
+    get:
+      summary: トランザクション履歴取得
+      operationId: getTransactionHistory
+      tags:
+        - History
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ユーザーID
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+          description: 取得件数
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: オフセット
+        - name: currency_type
+          in: query
+          schema:
+            type: string
+            enum: [paid, free]
+          description: 通貨種別フィルタ
+        - name: transaction_type
+          in: query
+          schema:
+            type: string
+            enum: [grant, consume, refund, expire]
+          description: 取引種別フィルタ
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionHistoryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    BalanceResponse:
+      type: object
+      properties:
+        user_id:
+          type: string
+        balances:
+          type: object
+          properties:
+            paid:
+              type: string
+              description: 有償通貨残高（整数値の文字列）
+            free:
+              type: string
+              description: 無償通貨残高（整数値の文字列）
+
+    GrantRequest:
+      type: object
+      required:
+        - currency_type
+        - amount
+      properties:
+        currency_type:
+          type: string
+          enum: [paid, free]
+        amount:
+          type: string
+          description: 整数値の文字列
+        reason:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+
+    GrantResponse:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+        balance_after:
+          type: string
+          description: 整数値の文字列
+        status:
+          type: string
+
+    ConsumeRequest:
+      type: object
+      required:
+        - currency_type
+        - amount
+      properties:
+        currency_type:
+          type: string
+          enum: [paid, free, auto]
+          description: "paid/free: 指定通貨タイプで消費, auto: 優先順位制御"
+        amount:
+          type: string
+          description: 整数値の文字列
+        item_id:
+          type: string
+        use_priority:
+          type: boolean
+          default: false
+          description: 優先順位制御（無料通貨優先）
+        metadata:
+          type: object
+          additionalProperties: true
+
+    ConsumeResponse:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+        consumption_details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsumptionDetail'
+          description: 優先順位制御使用時
+        balance_after:
+          type: string
+          description: 単一通貨タイプ消費時（整数値の文字列）
+        total_consumed:
+          type: string
+          description: 優先順位制御使用時（整数値の文字列）
+        status:
+          type: string
+
+    ConsumptionDetail:
+      type: object
+      properties:
+        currency_type:
+          type: string
+          enum: [paid, free]
+        amount:
+          type: string
+          description: 整数値の文字列
+        balance_before:
+          type: string
+          description: 整数値の文字列
+        balance_after:
+          type: string
+          description: 整数値の文字列
+
+    ProcessPaymentRequest:
+      type: object
+      required:
+        - payment_request_id
+        - user_id
+        - method_name
+        - details
+        - amount
+        - currency
+      properties:
+        payment_request_id:
+          type: string
+        user_id:
+          type: string
+        method_name:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string
+        amount:
+          type: string
+          description: 整数値の文字列
+        currency:
+          type: string
+
+    ProcessPaymentResponse:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+        payment_request_id:
+          type: string
+        consumption_details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsumptionDetail'
+        total_consumed:
+          type: string
+          description: 整数値の文字列
+        status:
+          type: string
+
+    RedeemCodeRequest:
+      type: object
+      required:
+        - code
+        - user_id
+      properties:
+        code:
+          type: string
+          description: 引き換えコード
+        user_id:
+          type: string
+          description: ユーザーID
+
+    RedeemCodeResponse:
+      type: object
+      properties:
+        redemption_id:
+          type: string
+        transaction_id:
+          type: string
+        code:
+          type: string
+        currency_type:
+          type: string
+          enum: [paid, free]
+        amount:
+          type: string
+          description: 整数値の文字列
+        balance_after:
+          type: string
+          description: 整数値の文字列
+        status:
+          type: string
+
+    TransactionHistoryResponse:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    Transaction:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+        transaction_type:
+          type: string
+        currency_type:
+          type: string
+        amount:
+          type: string
+          description: 整数値の文字列
+        balance_before:
+          type: string
+          description: 整数値の文字列
+        balance_after:
+          type: string
+          description: 整数値の文字列
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+
+  responses:
+    BadRequest:
+      description: 不正なリクエスト
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: 認証エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: リソースが見つからない
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: サーバーエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

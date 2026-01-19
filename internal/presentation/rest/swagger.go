@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"gem-server/internal/presentation/openapi"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -9,7 +11,8 @@ import (
 func SetupSwagger(e *echo.Echo) {
 	// OpenAPI仕様ファイルの配信
 	e.GET("/openapi.yaml", func(c echo.Context) error {
-		return c.File("./internal/presentation/openapi/spec.yaml")
+		c.Response().Header().Set("Content-Type", "application/x-yaml")
+		return c.Blob(200, "application/x-yaml", openapi.Spec)
 	})
 
 	// Swagger UI用の静的ファイル配信（簡易版）

@@ -9,14 +9,15 @@ import (
 	"syscall"
 	"time"
 
-	currencyapp "gem-server/internal/application/currency"
 	redemptionapp "gem-server/internal/application/code_redemption"
+	currencyapp "gem-server/internal/application/currency"
 	historyapp "gem-server/internal/application/history"
 	paymentapp "gem-server/internal/application/payment"
 	"gem-server/internal/domain/service"
 	"gem-server/internal/infrastructure/config"
 	otelinfra "gem-server/internal/infrastructure/observability/otel"
 	"gem-server/internal/infrastructure/persistence/mysql"
+	grpcserver "gem-server/internal/presentation/grpc"
 	"gem-server/internal/presentation/rest"
 )
 
@@ -126,6 +127,19 @@ func main() {
 		log.Fatalf("Failed to create router: %v", err)
 	}
 
+	// gRPCサーバーの初期化
+	grpcSrv, err := grpcserver.NewServer(
+		cfg,
+		logger,
+		currencyAppService,
+		paymentAppService,
+		redemptionAppService,
+		historyAppService,
+	)
+	if err != nil {
+		log.Fatalf("Failed to create gRPC server: %v", err)
+	}
+
 	// サーバーアドレスの設定
 	address := fmt.Sprintf(":%d", cfg.Server.Port)
 
@@ -133,26 +147,39 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
-	// サーバーを別ゴルーチンで起動
+	// REST APIサーバーを別ゴルーチンで起動
 	go func() {
-		log.Printf("Server starting on %s", address)
+		log.Printf("REST API server starting on %s", address)
 		if err := router.Start(address); err != nil {
-			log.Printf("Server error: %v", err)
+			log.Printf("REST API server error: %v", err)
+		}
+	}()
+
+	// gRPCサーバーを別ゴルーチンで起動
+	go func() {
+		log.Printf("gRPC server starting on port %d", grpcSrv.Port())
+		if err := grpcSrv.Start(); err != nil {
+			log.Printf("gRPC server error: %v", err)
 		}
 	}()
 
 	// シグナルを待機
 	<-quit
-	log.Println("Shutting down server...")
+	log.Println("Shutting down servers...")
 
 	// グレースフルシャットダウン
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	// REST APIサーバーのシャットダウン
 	if err := router.Shutdown(); err != nil {
-		log.Printf("Error shutting down server: %v", err)
+		log.Printf("Error shutting down REST API server: %v", err)
 	}
-	_ = shutdownCtx // 将来の拡張用に保持
 
-	log.Println("Server stopped")
+	// gRPCサーバーのシャットダウン
+	if err := grpcSrv.Stop(shutdownCtx); err != nil {
+		log.Printf("Error shutting down gRPC server: %v", err)
+	}
+
+	log.Println("Servers stopped")
 }

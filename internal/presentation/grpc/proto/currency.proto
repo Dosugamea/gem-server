@@ -1,0 +1,145 @@
+syntax = "proto3";
+
+package currency;
+
+option go_package = "gem-server/internal/presentation/grpc/pb;pb";
+
+// CurrencyService 通貨管理サービス
+service CurrencyService {
+  // GetBalance 残高取得
+  rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse);
+  
+  // Grant 通貨付与
+  rpc Grant(GrantRequest) returns (GrantResponse);
+  
+  // Consume 通貨消費
+  rpc Consume(ConsumeRequest) returns (ConsumeResponse);
+  
+  // ProcessPayment 決済処理
+  rpc ProcessPayment(ProcessPaymentRequest) returns (ProcessPaymentResponse);
+  
+  // RedeemCode コード引き換え
+  rpc RedeemCode(RedeemCodeRequest) returns (RedeemCodeResponse);
+  
+  // GetTransactionHistory トランザクション履歴取得
+  rpc GetTransactionHistory(GetTransactionHistoryRequest) returns (GetTransactionHistoryResponse);
+}
+
+// GetBalanceRequest 残高取得リクエスト
+message GetBalanceRequest {
+  string user_id = 1;
+}
+
+// GetBalanceResponse 残高取得レスポンス
+message GetBalanceResponse {
+  string user_id = 1;
+  map<string, string> balances = 2; // "paid" => "1000", "free" => "500" (整数値の文字列)
+}
+
+// GrantRequest 通貨付与リクエスト
+message GrantRequest {
+  string user_id = 1;
+  string currency_type = 2; // "paid" or "free"
+  string amount = 3; // 整数値の文字列（例: "100"）
+  string reason = 4;
+  map<string, string> metadata = 5;
+}
+
+// GrantResponse 通貨付与レスポンス
+message GrantResponse {
+  string transaction_id = 1;
+  string balance_after = 2; // 整数値の文字列（例: "600"）
+  string status = 3;
+}
+
+// ConsumeRequest 通貨消費リクエスト
+message ConsumeRequest {
+  string user_id = 1;
+  string currency_type = 2; // "paid", "free", or "auto"
+  string amount = 3; // 整数値の文字列（例: "50"）
+  string item_id = 4;
+  bool use_priority = 5; // 優先順位制御（無料通貨優先）
+  map<string, string> metadata = 6;
+}
+
+// ConsumeResponse 通貨消費レスポンス
+message ConsumeResponse {
+  string transaction_id = 1;
+  repeated ConsumptionDetail consumption_details = 2; // 優先順位制御使用時
+  string balance_after = 3; // 単一通貨タイプ消費時
+  string total_consumed = 4; // 優先順位制御使用時
+  string status = 5;
+}
+
+// ConsumptionDetail 消費詳細
+message ConsumptionDetail {
+  string currency_type = 1; // "paid" or "free"
+  string amount = 2; // 整数値の文字列
+  string balance_before = 3; // 整数値の文字列
+  string balance_after = 4; // 整数値の文字列
+}
+
+// ProcessPaymentRequest 決済処理リクエスト
+message ProcessPaymentRequest {
+  string payment_request_id = 1;
+  string user_id = 2;
+  string method_name = 3;
+  map<string, string> details = 4;
+  string amount = 5;
+  string currency = 6;
+}
+
+// ProcessPaymentResponse 決済処理レスポンス
+message ProcessPaymentResponse {
+  string transaction_id = 1;
+  string payment_request_id = 2;
+  repeated ConsumptionDetail consumption_details = 3;
+  string total_consumed = 4;
+  string status = 5;
+}
+
+// RedeemCodeRequest コード引き換えリクエスト
+message RedeemCodeRequest {
+  string code = 1;
+  string user_id = 2;
+}
+
+// RedeemCodeResponse コード引き換えレスポンス
+message RedeemCodeResponse {
+  string redemption_id = 1;
+  string transaction_id = 2;
+  string code = 3;
+  string currency_type = 4;
+  string amount = 5;
+  string balance_after = 6;
+  string status = 7;
+}
+
+// GetTransactionHistoryRequest トランザクション履歴取得リクエスト
+message GetTransactionHistoryRequest {
+  string user_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+  string currency_type = 4; // optional
+  string transaction_type = 5; // optional
+}
+
+// GetTransactionHistoryResponse トランザクション履歴取得レスポンス
+message GetTransactionHistoryResponse {
+  repeated Transaction transactions = 1;
+  int32 total = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+}
+
+// Transaction トランザクション
+message Transaction {
+  string transaction_id = 1;
+  string transaction_type = 2;
+  string currency_type = 3;
+  string amount = 4; // 整数値の文字列（例: "100"）
+  string balance_before = 5; // 整数値の文字列（例: "500"）
+  string balance_after = 6; // 整数値の文字列（例: "600"）
+  string status = 7;
+  string created_at = 8;
+}

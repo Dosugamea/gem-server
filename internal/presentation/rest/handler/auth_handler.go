@@ -8,6 +8,26 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// GenerateTokenRequest トークン生成リクエスト
+// @Description トークン生成リクエスト
+type GenerateTokenRequest struct {
+	UserID string `json:"user_id" example:"user123"`
+}
+
+// GenerateTokenResponse トークン生成レスポンス
+// @Description トークン生成レスポンス
+type GenerateTokenResponse struct {
+	Token     string `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoidXNlcjEyMyIsImV4cCI6MTcwMDAwMDAwMH0.signature"`
+	ExpiresIn int    `json:"expires_in" example:"3600"`
+	TokenType string `json:"token_type" example:"Bearer"`
+}
+
+// ErrorResponse エラーレスポンス
+// @Description エラーレスポンス
+type ErrorResponse struct {
+	Error string `json:"error" example:"invalid request body"`
+}
+
 // AuthHandler 認証関連ハンドラー
 type AuthHandler struct {
 	authService *authapp.AuthApplicationService
@@ -21,7 +41,15 @@ func NewAuthHandler(authService *authapp.AuthApplicationService) *AuthHandler {
 }
 
 // GenerateToken トークン生成ハンドラー
-// POST /api/v1/auth/token
+// @Summary 認証トークンを生成
+// @Description ユーザーIDを元にJWT認証トークンを生成します
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body GenerateTokenRequest true "トークン生成リクエスト"
+// @Success 200 {object} GenerateTokenResponse "トークン生成成功"
+// @Failure 400 {object} ErrorResponse "不正なリクエスト"
+// @Router /auth/token [post]
 func (h *AuthHandler) GenerateToken(c echo.Context) error {
 	var reqBody struct {
 		UserID string `json:"user_id"`
@@ -44,9 +72,9 @@ func (h *AuthHandler) GenerateToken(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"token":      resp.Token,
-		"expires_in": resp.ExpiresIn,
-		"token_type": resp.TokenType,
+	return c.JSON(http.StatusOK, GenerateTokenResponse{
+		Token:     resp.Token,
+		ExpiresIn: int(resp.ExpiresIn),
+		TokenType: resp.TokenType,
 	})
 }

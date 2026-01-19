@@ -5,7 +5,12 @@
 
 # ドキュメント
 *.md
-docs/
+# docs/ はDockerfile内でswag initで生成されるため、除外しない
+# ただし、ローカルで生成されたdocsは除外（Dockerfile内で再生成される）
+docs/*.md
+docs/*.json
+docs/*.yaml
+# docs/docs.goはDockerfile内で生成されるため、ビルド時に必要
 .cursor/
 
 # テスト関連

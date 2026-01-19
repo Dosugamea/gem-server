@@ -30,6 +30,15 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Install swag
+        run: go install github.com/swaggo/swag/cmd/swag@latest
+
+      - name: Generate Swagger docs
+        run: swag init -g cmd/server/main.go -o docs
+
       - name: Get latest tag
         id: get_tag
         run: |
@@ -161,6 +170,12 @@ jobs:
         if: steps.check_tag.outputs.exists == 'false'
         run: |
           NEW_VERSION="${{ steps.calc_version.outputs.new_version }}"
+
+          # Swaggerドキュメントが生成されていることを確認
+          if [ ! -f "docs/docs.go" ]; then
+            echo "Error: Swagger docs not generated. Running swag init..."
+            swag init -g cmd/server/main.go -o docs
+          fi
 
           # バイナリをビルド
           mkdir -p release

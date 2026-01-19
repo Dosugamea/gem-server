@@ -9,6 +9,9 @@ RUN apk add --no-cache git make
 # golang-migrateをインストール
 RUN go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
+# swagをインストール（Swaggerドキュメント生成用）
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+
 # 作業ディレクトリを設定
 WORKDIR /app
 
@@ -18,6 +21,9 @@ RUN go mod download
 
 # ソースコードをコピー
 COPY . .
+
+# Swaggerドキュメントを生成
+RUN swag init -g cmd/server/main.go -o docs
 
 # アプリケーションをビルド
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o /app/bin/gem-server ./cmd/server

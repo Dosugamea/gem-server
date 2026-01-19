@@ -1,8 +1,6 @@
 package rest
 
 import (
-	"gem-server/internal/presentation/openapi"
-
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -10,19 +8,11 @@ import (
 
 // SetupSwagger Swagger UI / ReDoc統合を設定
 func SetupSwagger(e *echo.Echo) {
-	// OpenAPI仕様ファイルの配信
-	e.GET("/openapi.yaml", func(c echo.Context) error {
-		c.Response().Header().Set("Content-Type", "application/x-yaml")
-		return c.Blob(200, "application/x-yaml", openapi.Spec)
-	})
-
 	// Swagger UI（swaggo/echo-swaggerを使用）
-	// 既存のOpenAPI仕様ファイル（/openapi.yaml）を使用
-	e.GET("/swagger/*", echoSwagger.EchoWrapHandler(
-		echoSwagger.URL("/openapi.yaml"),
-	))
+	// swag initで生成されたドキュメントを使用
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
-	// ReDoc用のHTML
+	// ReDoc用のHTML（swagで生成されたdoc.jsonを使用）
 	e.GET("/redoc", func(c echo.Context) error {
 		return c.HTML(200, `
 <!DOCTYPE html>
@@ -37,7 +27,7 @@ func SetupSwagger(e *echo.Echo) {
 	</style>
 </head>
 <body>
-	<redoc spec-url="/openapi.yaml"></redoc>
+	<redoc spec-url="/swagger/doc.json"></redoc>
 	<script src="https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js"></script>
 </body>
 </html>

@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	_ "gem-server/docs" // swag initで生成されるdocsパッケージ
 	authapp "gem-server/internal/application/auth"
 	redemptionapp "gem-server/internal/application/code_redemption"
 	currencyapp "gem-server/internal/application/currency"
@@ -22,6 +23,16 @@ import (
 	"gem-server/internal/presentation/rest"
 )
 
+// @title Gem Server API
+// @version 1.0
+// @description 仮想通貨管理サービスのREST API
+// @host localhost:8080
+// @BasePath /api/v1
+// @schemes http https
+// @securityDefinitions.apikey Bearer
+// @in header
+// @name Authorization
+// @description JWT認証トークン。形式: "Bearer {token}"
 func main() {
 	// 設定の読み込み
 	cfg, err := config.Load()

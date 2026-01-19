@@ -9,6 +9,25 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// RedeemCodeRequest コード引き換えリクエスト
+// @Description コード引き換えリクエスト
+type RedeemCodeRequest struct {
+	Code   string `json:"code" example:"REDEEM123"`
+	UserID string `json:"user_id" example:"user123"`
+}
+
+// RedeemCodeResponse コード引き換えレスポンス
+// @Description コード引き換えレスポンス
+type RedeemCodeResponse struct {
+	RedemptionID  string `json:"redemption_id" example:"red_123"`
+	TransactionID string `json:"transaction_id" example:"txn_456"`
+	Code          string `json:"code" example:"REDEEM123"`
+	CurrencyType  string `json:"currency_type" example:"free" enums:"paid,free"`
+	Amount        string `json:"amount" example:"500"`
+	BalanceAfter  string `json:"balance_after" example:"1000"`
+	Status        string `json:"status" example:"completed"`
+}
+
 // CodeRedemptionHandler コード引き換え関連ハンドラー
 type CodeRedemptionHandler struct {
 	redemptionService *redemptionapp.CodeRedemptionApplicationService
@@ -22,7 +41,18 @@ func NewCodeRedemptionHandler(redemptionService *redemptionapp.CodeRedemptionApp
 }
 
 // RedeemCode コード引き換えハンドラー
-// POST /api/v1/codes/redeem
+// @Summary コードを引き換え
+// @Description 引き換えコードを使用して通貨を付与します
+// @Tags redemption
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param request body RedeemCodeRequest true "コード引き換えリクエスト"
+// @Success 200 {object} RedeemCodeResponse "コード引き換え成功"
+// @Failure 400 {object} ErrorResponse "不正なリクエスト"
+// @Failure 403 {object} ErrorResponse "認証エラー"
+// @Failure 404 {object} ErrorResponse "コードが見つからない"
+// @Router /codes/redeem [post]
 func (h *CodeRedemptionHandler) RedeemCode(c echo.Context) error {
 	var reqBody struct {
 		Code   string `json:"code"`
@@ -49,13 +79,13 @@ func (h *CodeRedemptionHandler) RedeemCode(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"redemption_id":  resp.RedemptionID,
-		"transaction_id": resp.TransactionID,
-		"code":           resp.Code,
-		"currency_type":  resp.CurrencyType,
-		"amount":         strconv.FormatInt(resp.Amount, 10),
-		"balance_after":  strconv.FormatInt(resp.BalanceAfter, 10),
-		"status":         resp.Status,
+	return c.JSON(http.StatusOK, RedeemCodeResponse{
+		RedemptionID:  resp.RedemptionID,
+		TransactionID: resp.TransactionID,
+		Code:          resp.Code,
+		CurrencyType:  resp.CurrencyType,
+		Amount:        strconv.FormatInt(resp.Amount, 10),
+		BalanceAfter:  strconv.FormatInt(resp.BalanceAfter, 10),
+		Status:        resp.Status,
 	})
 }

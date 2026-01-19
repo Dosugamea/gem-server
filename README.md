@@ -1,5 +1,7 @@
 # gem-server
 
+[![codecov](https://codecov.io/github/Dosugamea/gem-server/branch/main/graph/badge.svg?token=YD38S704IT)](https://codecov.io/github/Dosugamea/gem-server)
+
 PaymentRequest APIプロバイダーとして機能する仮想通貨管理サービス
 
 ## 概要

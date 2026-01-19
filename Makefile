@@ -1,10 +1,12 @@
-.PHONY: build run test clean deps lint fmt help
+.PHONY: build run test clean deps lint fmt help migrate-up migrate-down migrate-create migrate-version migrate-force
 
 # 変数定義
 BINARY_NAME=gem-server
 CMD_PATH=cmd/main.go
 BUILD_DIR=bin
 COVERAGE_DIR=coverage
+MIGRATIONS_DIR=migrations
+DATABASE_URL?=mysql://root:password@tcp(localhost:3306)/gem_db?multiStatements=true
 
 # デフォルトターゲット
 .DEFAULT_GOAL := help
@@ -57,6 +59,39 @@ clean:
 	@rm -rf $(BUILD_DIR)
 	@rm -rf $(COVERAGE_DIR)
 	@go clean
+
+## migrate-up: マイグレーションを実行（up）
+migrate-up:
+	@echo "Running migrations up..."
+	@migrate -path $(MIGRATIONS_DIR) -database "$(DATABASE_URL)" up
+
+## migrate-down: マイグレーションを1つ戻す（down）
+migrate-down:
+	@echo "Running migrations down..."
+	@migrate -path $(MIGRATIONS_DIR) -database "$(DATABASE_URL)" down 1
+
+## migrate-create: 新しいマイグレーションファイルを作成
+migrate-create:
+	@if [ -z "$(NAME)" ]; then \
+		echo "Error: NAME is required. Usage: make migrate-create NAME=migration_name"; \
+		exit 1; \
+	fi
+	@echo "Creating migration: $(NAME)..."
+	@migrate create -ext sql -dir $(MIGRATIONS_DIR) -seq $(NAME)
+
+## migrate-version: 現在のマイグレーションバージョンを表示
+migrate-version:
+	@echo "Current migration version:"
+	@migrate -path $(MIGRATIONS_DIR) -database "$(DATABASE_URL)" version
+
+## migrate-force: マイグレーションバージョンを強制的に設定
+migrate-force:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Error: VERSION is required. Usage: make migrate-force VERSION=1"; \
+		exit 1; \
+	fi
+	@echo "Forcing migration version to $(VERSION)..."
+	@migrate -path $(MIGRATIONS_DIR) -database "$(DATABASE_URL)" force $(VERSION)
 
 ## help: このヘルプメッセージを表示
 help:

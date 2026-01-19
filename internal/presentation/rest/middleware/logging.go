@@ -3,8 +3,8 @@ package middleware
 import (
 	"time"
 
-	"github.com/labstack/echo/v4"
 	otelinfra "gem-server/internal/infrastructure/observability/otel"
+	"github.com/labstack/echo/v4"
 )
 
 // LoggingMiddleware ログミドルウェア

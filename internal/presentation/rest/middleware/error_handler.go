@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
 	otelinfra "gem-server/internal/infrastructure/observability/otel"
+	"github.com/labstack/echo/v4"
 
 	"gem-server/internal/domain/currency"
 	"gem-server/internal/domain/payment_request"

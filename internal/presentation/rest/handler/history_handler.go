@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/labstack/echo/v4"
 	historyapp "gem-server/internal/application/history"
+	"github.com/labstack/echo/v4"
 )
 
 // HistoryHandler 履歴関連ハンドラー
@@ -73,7 +73,7 @@ func (h *HistoryHandler) GetTransactionHistory(c echo.Context) error {
 	transactions := make([]map[string]interface{}, len(resp.Transactions))
 	for i, txn := range resp.Transactions {
 		transactions[i] = map[string]interface{}{
-			"transaction_id":  txn.TransactionID(),
+			"transaction_id":   txn.TransactionID(),
 			"transaction_type": txn.TransactionType().String(),
 			"currency_type":    txn.CurrencyType().String(),
 			"amount":           strconv.FormatInt(txn.Amount(), 10),

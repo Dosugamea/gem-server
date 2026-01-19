@@ -3,10 +3,10 @@ package middleware
 import (
 	"strings"
 
+	"gem-server/internal/infrastructure/config"
+	otelinfra "gem-server/internal/infrastructure/observability/otel"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
-	otelinfra "gem-server/internal/infrastructure/observability/otel"
-	"gem-server/internal/infrastructure/config"
 )
 
 // AuthMiddleware JWT認証ミドルウェア

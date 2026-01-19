@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/labstack/echo/v4"
 	paymentapp "gem-server/internal/application/payment"
+	"github.com/labstack/echo/v4"
 )
 
 // PaymentHandler 決済関連ハンドラー
@@ -67,17 +67,17 @@ func (h *PaymentHandler) ProcessPayment(c echo.Context) error {
 	for i, detail := range resp.ConsumptionDetails {
 		details[i] = map[string]string{
 			"currency_type":  detail.CurrencyType,
-			"amount":          strconv.FormatInt(detail.Amount, 10),
-			"balance_before":  strconv.FormatInt(detail.BalanceBefore, 10),
-			"balance_after":   strconv.FormatInt(detail.BalanceAfter, 10),
+			"amount":         strconv.FormatInt(detail.Amount, 10),
+			"balance_before": strconv.FormatInt(detail.BalanceBefore, 10),
+			"balance_after":  strconv.FormatInt(detail.BalanceAfter, 10),
 		}
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"transaction_id":      resp.TransactionID,
-		"payment_request_id":   resp.PaymentRequestID,
-		"consumption_details":  details,
-		"total_consumed":       strconv.FormatInt(resp.TotalConsumed, 10),
-		"status":               resp.Status,
+		"payment_request_id":  resp.PaymentRequestID,
+		"consumption_details": details,
+		"total_consumed":      strconv.FormatInt(resp.TotalConsumed, 10),
+		"status":              resp.Status,
 	})
 }

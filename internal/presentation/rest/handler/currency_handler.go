@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/labstack/echo/v4"
 	currencyapp "gem-server/internal/application/currency"
+	"github.com/labstack/echo/v4"
 )
 
 // CurrencyHandler 通貨関連ハンドラー
@@ -100,7 +100,7 @@ func (h *CurrencyHandler) GrantCurrency(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"transaction_id": resp.TransactionID,
-		"balance_after": strconv.FormatInt(resp.BalanceAfter, 10),
+		"balance_after":  strconv.FormatInt(resp.BalanceAfter, 10),
 		"status":         resp.Status,
 	})
 }
@@ -171,9 +171,9 @@ func (h *CurrencyHandler) ConsumeCurrency(c echo.Context) error {
 		for i, detail := range resp.ConsumptionDetails {
 			details[i] = map[string]string{
 				"currency_type":  detail.CurrencyType,
-				"amount":          strconv.FormatInt(detail.Amount, 10),
-				"balance_before":  strconv.FormatInt(detail.BalanceBefore, 10),
-				"balance_after":   strconv.FormatInt(detail.BalanceAfter, 10),
+				"amount":         strconv.FormatInt(detail.Amount, 10),
+				"balance_before": strconv.FormatInt(detail.BalanceBefore, 10),
+				"balance_after":  strconv.FormatInt(detail.BalanceAfter, 10),
 			}
 		}
 		response["consumption_details"] = details

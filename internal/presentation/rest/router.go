@@ -1,25 +1,25 @@
 package rest
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	currencyapp "gem-server/internal/application/currency"
 	redemptionapp "gem-server/internal/application/code_redemption"
+	currencyapp "gem-server/internal/application/currency"
 	historyapp "gem-server/internal/application/history"
 	paymentapp "gem-server/internal/application/payment"
 	"gem-server/internal/infrastructure/config"
 	otelinfra "gem-server/internal/infrastructure/observability/otel"
 	"gem-server/internal/presentation/rest/handler"
 	restmiddleware "gem-server/internal/presentation/rest/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 // Router REST APIルーター
 type Router struct {
-	echo            *echo.Echo
-	currencyHandler *handler.CurrencyHandler
-	paymentHandler  *handler.PaymentHandler
+	echo              *echo.Echo
+	currencyHandler   *handler.CurrencyHandler
+	paymentHandler    *handler.PaymentHandler
 	redemptionHandler *handler.CodeRedemptionHandler
-	historyHandler  *handler.HistoryHandler
+	historyHandler    *handler.HistoryHandler
 }
 
 // NewRouter 新しいRouterを作成

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/labstack/echo/v4"
 	redemptionapp "gem-server/internal/application/code_redemption"
+	"github.com/labstack/echo/v4"
 )
 
 // CodeRedemptionHandler コード引き換え関連ハンドラー

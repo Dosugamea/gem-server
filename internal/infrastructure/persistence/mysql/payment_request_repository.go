@@ -36,22 +36,22 @@ func (r *PaymentRequestRepository) Save(ctx context.Context, pr *payment_request
 			response = VALUES(response),
 			updated_at = VALUES(updated_at)
 	`
-	
+
 	paymentMethodDataJSON, err := json.Marshal(pr.PaymentMethodData())
 	if err != nil {
 		return fmt.Errorf("failed to marshal payment_method_data: %w", err)
 	}
-	
+
 	detailsJSON, err := json.Marshal(pr.Details())
 	if err != nil {
 		return fmt.Errorf("failed to marshal details: %w", err)
 	}
-	
+
 	responseJSON, err := json.Marshal(pr.Response())
 	if err != nil {
 		return fmt.Errorf("failed to marshal response: %w", err)
 	}
-	
+
 	_, err = r.db.ExecContext(ctx, query,
 		pr.PaymentRequestID(),
 		pr.UserID(),
@@ -65,11 +65,11 @@ func (r *PaymentRequestRepository) Save(ctx context.Context, pr *payment_request
 		pr.CreatedAt(),
 		pr.UpdatedAt(),
 	)
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to save payment request: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -83,12 +83,12 @@ func (r *PaymentRequestRepository) FindByPaymentRequestID(ctx context.Context, p
 		FROM payment_requests
 		WHERE payment_request_id = ?
 	`
-	
+
 	var dbPaymentRequestID, dbUserID, dbCurrency, dbCurrencyType, dbStatus string
 	var amount int64
 	var paymentMethodDataJSON, detailsJSON, responseJSON sql.NullString
 	var createdAt, updatedAt time.Time
-	
+
 	err := r.db.QueryRowContext(ctx, query, paymentRequestID).Scan(
 		&dbPaymentRequestID,
 		&dbUserID,
@@ -102,19 +102,19 @@ func (r *PaymentRequestRepository) FindByPaymentRequestID(ctx context.Context, p
 		&createdAt,
 		&updatedAt,
 	)
-	
+
 	if err == sql.ErrNoRows {
 		return nil, payment_request.ErrPaymentRequestNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to find payment request: %w", err)
 	}
-	
+
 	ct, err := currency.NewCurrencyType(dbCurrencyType)
 	if err != nil {
 		return nil, fmt.Errorf("invalid currency type: %w", err)
 	}
-	
+
 	pr := payment_request.NewPaymentRequest(
 		dbPaymentRequestID,
 		dbUserID,
@@ -122,7 +122,7 @@ func (r *PaymentRequestRepository) FindByPaymentRequestID(ctx context.Context, p
 		dbCurrency,
 		ct,
 	)
-	
+
 	// ステータスを設定
 	switch dbStatus {
 	case "pending":
@@ -134,7 +134,7 @@ func (r *PaymentRequestRepository) FindByPaymentRequestID(ctx context.Context, p
 	case "cancelled":
 		pr.Cancel()
 	}
-	
+
 	// JSONデータを設定
 	if paymentMethodDataJSON.Valid && paymentMethodDataJSON.String != "" {
 		var paymentMethodData map[string]interface{}
@@ -143,7 +143,7 @@ func (r *PaymentRequestRepository) FindByPaymentRequestID(ctx context.Context, p
 		}
 		pr.SetPaymentMethodData(paymentMethodData)
 	}
-	
+
 	if detailsJSON.Valid && detailsJSON.String != "" {
 		var details map[string]interface{}
 		if err := json.Unmarshal([]byte(detailsJSON.String), &details); err != nil {
@@ -151,7 +151,7 @@ func (r *PaymentRequestRepository) FindByPaymentRequestID(ctx context.Context, p
 		}
 		pr.SetDetails(details)
 	}
-	
+
 	if responseJSON.Valid && responseJSON.String != "" {
 		var response map[string]interface{}
 		if err := json.Unmarshal([]byte(responseJSON.String), &response); err != nil {
@@ -159,7 +159,7 @@ func (r *PaymentRequestRepository) FindByPaymentRequestID(ctx context.Context, p
 		}
 		pr.SetResponse(response)
 	}
-	
+
 	return pr, nil
 }
 

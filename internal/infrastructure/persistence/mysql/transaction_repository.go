@@ -33,7 +33,7 @@ func (r *TransactionRepository) Save(ctx context.Context, t *transaction.Transac
 			status = VALUES(status),
 			updated_at = VALUES(updated_at)
 	`
-	
+
 	var metadataJSON []byte
 	var err error
 	if t.Metadata() != nil {
@@ -42,13 +42,13 @@ func (r *TransactionRepository) Save(ctx context.Context, t *transaction.Transac
 			return fmt.Errorf("failed to marshal metadata: %w", err)
 		}
 	}
-	
+
 	paymentRequestID := t.PaymentRequestID()
 	var paymentRequestIDValue interface{}
 	if paymentRequestID != nil {
 		paymentRequestIDValue = *paymentRequestID
 	}
-	
+
 	_, err = r.db.ExecContext(ctx, query,
 		t.TransactionID(),
 		t.UserID(),
@@ -63,11 +63,11 @@ func (r *TransactionRepository) Save(ctx context.Context, t *transaction.Transac
 		t.CreatedAt(),
 		t.UpdatedAt(),
 	)
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to save transaction: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -81,14 +81,14 @@ func (r *TransactionRepository) FindByTransactionID(ctx context.Context, transac
 		FROM transactions
 		WHERE transaction_id = ?
 	`
-	
+
 	var dbTransactionID, dbUserID, dbTransactionType, dbCurrencyType string
 	var amount, balanceBefore, balanceAfter int64
 	var dbStatus string
 	var paymentRequestID sql.NullString
 	var metadataJSON sql.NullString
 	var createdAt, updatedAt time.Time
-	
+
 	err := r.db.QueryRowContext(ctx, query, transactionID).Scan(
 		&dbTransactionID,
 		&dbUserID,
@@ -103,36 +103,36 @@ func (r *TransactionRepository) FindByTransactionID(ctx context.Context, transac
 		&createdAt,
 		&updatedAt,
 	)
-	
+
 	if err == sql.ErrNoRows {
 		return nil, transaction.ErrTransactionNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to find transaction: %w", err)
 	}
-	
+
 	tt, err := transaction.NewTransactionType(dbTransactionType)
 	if err != nil {
 		return nil, fmt.Errorf("invalid transaction type: %w", err)
 	}
-	
+
 	ct, err := currency.NewCurrencyType(dbCurrencyType)
 	if err != nil {
 		return nil, fmt.Errorf("invalid currency type: %w", err)
 	}
-	
+
 	ts, err := transaction.NewTransactionStatus(dbStatus)
 	if err != nil {
 		return nil, fmt.Errorf("invalid transaction status: %w", err)
 	}
-	
+
 	var metadata map[string]interface{}
 	if metadataJSON.Valid && metadataJSON.String != "" {
 		if err := json.Unmarshal([]byte(metadataJSON.String), &metadata); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
 		}
 	}
-	
+
 	t := transaction.NewTransaction(
 		dbTransactionID,
 		dbUserID,
@@ -144,11 +144,11 @@ func (r *TransactionRepository) FindByTransactionID(ctx context.Context, transac
 		ts,
 		metadata,
 	)
-	
+
 	if paymentRequestID.Valid {
 		t.SetPaymentRequestID(paymentRequestID.String)
 	}
-	
+
 	return t, nil
 }
 
@@ -164,13 +164,13 @@ func (r *TransactionRepository) FindByUserID(ctx context.Context, userID string,
 		ORDER BY created_at DESC
 		LIMIT ? OFFSET ?
 	`
-	
+
 	rows, err := r.db.QueryContext(ctx, query, userID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query transactions: %w", err)
 	}
 	defer rows.Close()
-	
+
 	var transactions []*transaction.Transaction
 	for rows.Next() {
 		var dbTransactionID, dbUserID, dbTransactionType, dbCurrencyType string
@@ -179,7 +179,7 @@ func (r *TransactionRepository) FindByUserID(ctx context.Context, userID string,
 		var paymentRequestID sql.NullString
 		var metadataJSON sql.NullString
 		var createdAt, updatedAt time.Time
-		
+
 		if err := rows.Scan(
 			&dbTransactionID,
 			&dbUserID,
@@ -196,29 +196,29 @@ func (r *TransactionRepository) FindByUserID(ctx context.Context, userID string,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan transaction: %w", err)
 		}
-		
+
 		tt, err := transaction.NewTransactionType(dbTransactionType)
 		if err != nil {
 			return nil, fmt.Errorf("invalid transaction type: %w", err)
 		}
-		
+
 		ct, err := currency.NewCurrencyType(dbCurrencyType)
 		if err != nil {
 			return nil, fmt.Errorf("invalid currency type: %w", err)
 		}
-		
+
 		ts, err := transaction.NewTransactionStatus(dbStatus)
 		if err != nil {
 			return nil, fmt.Errorf("invalid transaction status: %w", err)
 		}
-		
+
 		var metadata map[string]interface{}
 		if metadataJSON.Valid && metadataJSON.String != "" {
 			if err := json.Unmarshal([]byte(metadataJSON.String), &metadata); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
 			}
 		}
-		
+
 		t := transaction.NewTransaction(
 			dbTransactionID,
 			dbUserID,
@@ -230,18 +230,18 @@ func (r *TransactionRepository) FindByUserID(ctx context.Context, userID string,
 			ts,
 			metadata,
 		)
-		
+
 		if paymentRequestID.Valid {
 			t.SetPaymentRequestID(paymentRequestID.String)
 		}
-		
+
 		transactions = append(transactions, t)
 	}
-	
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("failed to iterate transactions: %w", err)
 	}
-	
+
 	return transactions, nil
 }
 
@@ -257,14 +257,14 @@ func (r *TransactionRepository) FindByPaymentRequestID(ctx context.Context, paym
 		ORDER BY created_at DESC
 		LIMIT 1
 	`
-	
+
 	var dbTransactionID, dbUserID, dbTransactionType, dbCurrencyType string
 	var amount, balanceBefore, balanceAfter int64
 	var dbStatus string
 	var paymentRequestIDValue sql.NullString
 	var metadataJSON sql.NullString
 	var createdAt, updatedAt time.Time
-	
+
 	err := r.db.QueryRowContext(ctx, query, paymentRequestID).Scan(
 		&dbTransactionID,
 		&dbUserID,
@@ -279,36 +279,36 @@ func (r *TransactionRepository) FindByPaymentRequestID(ctx context.Context, paym
 		&createdAt,
 		&updatedAt,
 	)
-	
+
 	if err == sql.ErrNoRows {
 		return nil, transaction.ErrTransactionNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to find transaction: %w", err)
 	}
-	
+
 	tt, err := transaction.NewTransactionType(dbTransactionType)
 	if err != nil {
 		return nil, fmt.Errorf("invalid transaction type: %w", err)
 	}
-	
+
 	ct, err := currency.NewCurrencyType(dbCurrencyType)
 	if err != nil {
 		return nil, fmt.Errorf("invalid currency type: %w", err)
 	}
-	
+
 	ts, err := transaction.NewTransactionStatus(dbStatus)
 	if err != nil {
 		return nil, fmt.Errorf("invalid transaction status: %w", err)
 	}
-	
+
 	var metadata map[string]interface{}
 	if metadataJSON.Valid && metadataJSON.String != "" {
 		if err := json.Unmarshal([]byte(metadataJSON.String), &metadata); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
 		}
 	}
-	
+
 	t := transaction.NewTransaction(
 		dbTransactionID,
 		dbUserID,
@@ -320,10 +320,10 @@ func (r *TransactionRepository) FindByPaymentRequestID(ctx context.Context, paym
 		ts,
 		metadata,
 	)
-	
+
 	if paymentRequestIDValue.Valid {
 		t.SetPaymentRequestID(paymentRequestIDValue.String)
 	}
-	
+
 	return t, nil
 }

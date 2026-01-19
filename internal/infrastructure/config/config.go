@@ -11,12 +11,12 @@ import (
 
 // Config アプリケーション全体の設定
 type Config struct {
-	Server     ServerConfig
-	Database   DatabaseConfig
-	Redis      RedisConfig
-	JWT        JWTConfig
+	Server        ServerConfig
+	Database      DatabaseConfig
+	Redis         RedisConfig
+	JWT           JWTConfig
 	OpenTelemetry OpenTelemetryConfig
-	Environment string
+	Environment   string
 }
 
 // ServerConfig サーバー設定
@@ -58,13 +58,13 @@ type JWTConfig struct {
 
 // OpenTelemetryConfig OpenTelemetry設定
 type OpenTelemetryConfig struct {
-	Enabled           bool
-	ServiceName       string
-	ServiceVersion    string
-	OTLPEndpoint      string
-	OTLPInsecure      bool
-	TraceExporter     string // "otlp", "jaeger", "stdout"
-	MetricsExporter  string // "otlp", "prometheus", "stdout"
+	Enabled         bool
+	ServiceName     string
+	ServiceVersion  string
+	OTLPEndpoint    string
+	OTLPInsecure    bool
+	TraceExporter   string // "otlp", "jaeger", "stdout"
+	MetricsExporter string // "otlp", "prometheus", "stdout"
 }
 
 // Load 設定を読み込む
@@ -106,12 +106,12 @@ func Load() (*Config, error) {
 			Issuer:     getEnv("JWT_ISSUER", "gem-server"),
 		},
 		OpenTelemetry: OpenTelemetryConfig{
-			Enabled:          getEnvAsBool("OTEL_ENABLED", true),
-			ServiceName:      getEnv("OTEL_SERVICE_NAME", "gem-server"),
-			ServiceVersion:   getEnv("OTEL_SERVICE_VERSION", "1.0.0"),
-			OTLPEndpoint:     getEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4318"),
-			OTLPInsecure:     getEnvAsBool("OTEL_EXPORTER_OTLP_INSECURE", true),
-			TraceExporter:    getEnv("OTEL_TRACES_EXPORTER", "otlp"),
+			Enabled:         getEnvAsBool("OTEL_ENABLED", true),
+			ServiceName:     getEnv("OTEL_SERVICE_NAME", "gem-server"),
+			ServiceVersion:  getEnv("OTEL_SERVICE_VERSION", "1.0.0"),
+			OTLPEndpoint:    getEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4318"),
+			OTLPInsecure:    getEnvAsBool("OTEL_EXPORTER_OTLP_INSECURE", true),
+			TraceExporter:   getEnv("OTEL_TRACES_EXPORTER", "otlp"),
 			MetricsExporter: getEnv("OTEL_METRICS_EXPORTER", "otlp"),
 		},
 	}

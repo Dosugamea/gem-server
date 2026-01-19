@@ -12,19 +12,19 @@ import (
 type Metrics struct {
 	// トランザクション数
 	TransactionCount metric.Int64Counter
-	
+
 	// 通貨残高の分布
 	CurrencyBalance metric.Int64Gauge
-	
+
 	// マイナス残高の発生件数
 	NegativeBalanceCount metric.Int64Counter
-	
+
 	// リクエスト数
 	RequestCount metric.Int64Counter
-	
+
 	// レスポンス時間
 	ResponseTime metric.Float64Histogram
-	
+
 	// エラー率
 	ErrorCount metric.Int64Counter
 }
@@ -32,7 +32,7 @@ type Metrics struct {
 // NewMetrics 新しいMetricsを作成
 func NewMetrics(meterName string) (*Metrics, error) {
 	meter := otel.Meter(meterName)
-	
+
 	transactionCount, err := meter.Int64Counter(
 		"transactions_total",
 		metric.WithDescription("Total number of transactions"),
@@ -40,7 +40,7 @@ func NewMetrics(meterName string) (*Metrics, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	currencyBalance, err := meter.Int64Gauge(
 		"currency_balance",
 		metric.WithDescription("Currency balance"),
@@ -48,7 +48,7 @@ func NewMetrics(meterName string) (*Metrics, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	negativeBalanceCount, err := meter.Int64Counter(
 		"negative_balance_total",
 		metric.WithDescription("Total number of negative balance occurrences"),
@@ -56,7 +56,7 @@ func NewMetrics(meterName string) (*Metrics, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	requestCount, err := meter.Int64Counter(
 		"requests_total",
 		metric.WithDescription("Total number of requests"),
@@ -64,7 +64,7 @@ func NewMetrics(meterName string) (*Metrics, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	responseTime, err := meter.Float64Histogram(
 		"response_time_seconds",
 		metric.WithDescription("Response time in seconds"),
@@ -72,7 +72,7 @@ func NewMetrics(meterName string) (*Metrics, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	errorCount, err := meter.Int64Counter(
 		"errors_total",
 		metric.WithDescription("Total number of errors"),
@@ -80,7 +80,7 @@ func NewMetrics(meterName string) (*Metrics, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &Metrics{
 		TransactionCount:     transactionCount,
 		CurrencyBalance:      currencyBalance,

@@ -19,7 +19,7 @@ type DB struct {
 // NewDB 新しいデータベース接続を作成
 func NewDB(cfg *config.DatabaseConfig) (*DB, error) {
 	dsn := cfg.DSN()
-	
+
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
@@ -48,6 +48,6 @@ func (db *DB) Close() error {
 func (db *DB) HealthCheck() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	
+
 	return db.PingContext(ctx)
 }

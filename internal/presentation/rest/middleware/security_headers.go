@@ -17,9 +17,18 @@ func SecurityHeadersMiddleware() echo.MiddlewareFunc {
 			// MIMEタイプスニッフィング保護
 			c.Response().Header().Set("X-Content-Type-Options", "nosniff")
 
-			// コンテンツセキュリティポリシー（必要に応じて調整）
-			c.Response().Header().Set("Content-Security-Policy",
-				"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'")
+			// コンテンツセキュリティポリシー
+			// Swagger関連のパスでは外部CDNを許可
+			path := c.Request().URL.Path
+			var csp string
+			if isSwaggerPath(path) {
+				// Swagger UI用: unpkg.comとcdn.jsdelivr.netを許可
+				csp = "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:;"
+			} else {
+				// 通常のAPI用: より厳格な設定
+				csp = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+			}
+			c.Response().Header().Set("Content-Security-Policy", csp)
 
 			// Strict-Transport-Security（HTTPS使用時）
 			if c.Scheme() == "https" {
@@ -33,4 +42,9 @@ func SecurityHeadersMiddleware() echo.MiddlewareFunc {
 			return next(c)
 		}
 	}
+}
+
+// isSwaggerPath Swagger関連のパスかどうかを判定
+func isSwaggerPath(path string) bool {
+	return path == "/swagger" || path == "/redoc" || path == "/openapi.yaml"
 }

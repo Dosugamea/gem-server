@@ -154,3 +154,57 @@ func TestSecurityHeadersMiddleware_ErrorHandling(t *testing.T) {
 	assert.Equal(t, "DENY", rec.Header().Get("X-Frame-Options"))
 	assert.Equal(t, "nosniff", rec.Header().Get("X-Content-Type-Options"))
 }
+
+func TestSecurityHeadersMiddleware_SwaggerPath(t *testing.T) {
+	swaggerPaths := []string{"/swagger", "/redoc", "/openapi.yaml"}
+
+	for _, path := range swaggerPaths {
+		t.Run(path, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, path, nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.SetPath(path)
+
+			middleware := SecurityHeadersMiddleware()
+			handler := middleware(func(c echo.Context) error {
+				return c.String(http.StatusOK, "ok")
+			})
+
+			err := handler(c)
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, rec.Code)
+
+			// Swaggerパスでは外部CDNが許可されるCSPが設定される
+			csp := rec.Header().Get("Content-Security-Policy")
+			assert.Contains(t, csp, "https://unpkg.com")
+			assert.Contains(t, csp, "https://cdn.jsdelivr.net")
+			assert.Contains(t, csp, "https://fonts.googleapis.com")
+		})
+	}
+}
+
+func TestSecurityHeadersMiddleware_NonSwaggerPath(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/123/balance", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/api/v1/users/123/balance")
+
+	middleware := SecurityHeadersMiddleware()
+	handler := middleware(func(c echo.Context) error {
+		return c.String(http.StatusOK, "ok")
+	})
+
+	err := handler(c)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	// 通常のAPIパスでは外部CDNが許可されないCSPが設定される
+	csp := rec.Header().Get("Content-Security-Policy")
+	assert.NotContains(t, csp, "https://unpkg.com")
+	assert.NotContains(t, csp, "https://cdn.jsdelivr.net")
+	assert.Contains(t, csp, "default-src 'self'")
+	assert.Contains(t, csp, "script-src 'self' 'unsafe-inline'")
+	assert.Contains(t, csp, "style-src 'self' 'unsafe-inline'")
+}

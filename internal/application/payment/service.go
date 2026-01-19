@@ -21,14 +21,14 @@ import (
 
 // PaymentApplicationService 決済アプリケーションサービス
 type PaymentApplicationService struct {
-	currencyRepo        currency.CurrencyRepository
-	transactionRepo     transaction.TransactionRepository
-	paymentRequestRepo  payment_request.PaymentRequestRepository
-	txManager           *mysql.TransactionManager
-	logger              *otelinfra.Logger
-	metrics             *otelinfra.Metrics
-	tracer              trace.Tracer
-	maxRetries          int
+	currencyRepo       currency.CurrencyRepository
+	transactionRepo    transaction.TransactionRepository
+	paymentRequestRepo payment_request.PaymentRequestRepository
+	txManager          *mysql.TransactionManager
+	logger             *otelinfra.Logger
+	metrics            *otelinfra.Metrics
+	tracer             trace.Tracer
+	maxRetries         int
 }
 
 // NewPaymentApplicationService 新しいPaymentApplicationServiceを作成
@@ -359,7 +359,7 @@ func (s *PaymentApplicationService) ProcessPayment(ctx context.Context, req *Pro
 	s.logger.Info(ctx, "Payment processed successfully", map[string]interface{}{
 		"payment_request_id": req.PaymentRequestID,
 		"transaction_id":     transactionID,
-		"total_consumed":      totalConsumed,
+		"total_consumed":     totalConsumed,
 	})
 
 	return result, nil

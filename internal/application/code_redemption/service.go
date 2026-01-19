@@ -181,7 +181,7 @@ func (s *CodeRedemptionApplicationService) Redeem(ctx context.Context, req *Rede
 				c.Balance(),
 				transaction.TransactionStatusCompleted,
 				map[string]interface{}{
-					"code":         req.Code,
+					"code":          req.Code,
 					"redemption_id": redemptionID,
 				},
 			)
@@ -234,9 +234,9 @@ func (s *CodeRedemptionApplicationService) Redeem(ctx context.Context, req *Rede
 	}
 
 	s.logger.Info(ctx, "Code redeemed successfully", map[string]interface{}{
-		"code":          req.Code,
-		"user_id":       req.UserID,
-		"redemption_id": redemptionID,
+		"code":           req.Code,
+		"user_id":        req.UserID,
+		"redemption_id":  redemptionID,
 		"transaction_id": transactionID,
 	})
 

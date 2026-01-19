@@ -14,7 +14,7 @@ type GetTransactionHistoryRequest struct {
 // GetTransactionHistoryResponse トランザクション履歴取得レスポンス
 type GetTransactionHistoryResponse struct {
 	Transactions []*transaction.Transaction
-	Total         int
-	Limit         int
-	Offset        int
+	Total        int
+	Limit        int
+	Offset       int
 }

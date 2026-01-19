@@ -83,6 +83,9 @@ func setupMiddleware(e *echo.Echo, cfg *config.Config, logger *otelinfra.Logger,
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 	}))
 
+	// セキュリティヘッダーの設定
+	e.Use(restmiddleware.SecurityHeadersMiddleware())
+
 	// リクエストIDの設定
 	e.Use(middleware.RequestID())
 

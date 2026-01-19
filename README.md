@@ -144,6 +144,40 @@ go test ./...
 go test -cover ./...
 ```
 
+### コードフォーマット
+
+コードをフォーマットするには、以下のコマンドを実行してください：
+
+```bash
+# Makefileを使用（推奨）
+make fmt
+
+# または直接goコマンドを使用
+go fmt ./...
+```
+
+`go fmt ./...` は、プロジェクト内のすべてのGoファイルに対して標準的なフォーマットを適用します。
+
+### Swaggerドキュメントの生成
+
+APIドキュメント（Swagger/OpenAPI）を生成するには、以下のコマンドを実行してください：
+
+```bash
+# Makefileを使用（推奨）
+make swagger
+
+# または直接swagコマンドを使用
+# まずswagをインストール（初回のみ）
+go install github.com/swaggo/swag/cmd/swag@latest
+
+# Swaggerドキュメントを生成
+swag init -g cmd/server/main.go -o docs
+```
+
+生成されたドキュメントは以下のエンドポイントで確認できます：
+- **Swagger UI**: http://localhost:8080/swagger
+- **ReDoc**: http://localhost:8080/redoc
+
 ### 実行
 
 ```bash

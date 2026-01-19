@@ -1,4 +1,4 @@
-.PHONY: build run test clean deps lint fmt help migrate-up migrate-down migrate-create migrate-version migrate-force
+.PHONY: build run test clean deps lint fmt help migrate-up migrate-down migrate-create migrate-version migrate-force swagger
 
 # 変数定義
 BINARY_NAME=gem-server
@@ -92,6 +92,16 @@ migrate-force:
 	fi
 	@echo "Forcing migration version to $(VERSION)..."
 	@migrate -path $(MIGRATIONS_DIR) -database "$(DATABASE_URL)" force $(VERSION)
+
+## swagger: Swaggerドキュメントを生成
+swagger:
+	@echo "Generating Swagger documentation..."
+	@if ! command -v swag > /dev/null 2>&1; then \
+		echo "swag is not installed. Installing..."; \
+		go install github.com/swaggo/swag/cmd/swag@latest; \
+	fi
+	@swag init -g $(CMD_PATH) -o docs
+	@echo "Swagger documentation generated in docs/"
 
 ## help: このヘルプメッセージを表示
 help:

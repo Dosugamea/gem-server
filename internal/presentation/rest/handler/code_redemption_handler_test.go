@@ -2,7 +2,6 @@ package handler
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -51,27 +50,22 @@ func TestCodeRedemptionHandler_RedeemCode(t *testing.T) {
 					map[string]interface{}{},
 				)
 				mrcr.On("FindByCode", mock.Anything, "TESTCODE123").Return(code, nil)
+				// ユーザーはまだ引き換えていない
 				mrcr.On("HasUserRedeemed", mock.Anything, "TESTCODE123", "user123").Return(false, nil)
-
-				// コード更新（WithTransaction内で呼ばれる）
-				mrcr.On("Update", mock.Anything, mock.Anything).Return(nil)
-
-				// 通貨取得・作成（WithTransaction内で呼ばれる）
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 500, 1)
-				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(paidCurrency, nil)
-				mcr.On("Save", mock.Anything, mock.Anything).Return(nil)
-
-				// トランザクション保存（WithTransaction内で呼ばれる）
-				mtr.On("Save", mock.Anything, mock.Anything).Return(nil)
-
-				// 引き換え履歴保存（WithTransaction内で呼ばれる）
-				mrcr.On("SaveRedemption", mock.Anything, mock.Anything).Return(nil)
-
-				// トランザクション処理（最後に設定）
-				mtx.On("WithTransaction", mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
-					fn := args.Get(1).(func(*sql.Tx) error)
-					_ = fn(nil)
-				})
+				// コードを更新
+				mrcr.On("Update", mock.Anything, mock.AnythingOfType("*redemption_code.RedemptionCode")).Return(nil)
+				// 既存の通貨に付与
+				existingCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 500, 1)
+				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(existingCurrency, nil)
+				mcr.On("Save", mock.Anything, mock.MatchedBy(func(c *currency.Currency) bool {
+					return c.Balance() == 1500 && c.Version() == 2
+				})).Return(nil)
+				// トランザクション履歴を記録
+				mtr.On("Save", mock.Anything, mock.AnythingOfType("*transaction.Transaction")).Return(nil)
+				// 引き換え履歴を記録
+				mrcr.On("SaveRedemption", mock.Anything, mock.AnythingOfType("*redemption_code.CodeRedemption")).Return(nil)
+				// トランザクション処理
+				mtx.On("WithTransaction", mock.Anything, mock.AnythingOfType("func(*sql.Tx) error")).Return(nil)
 			},
 			expectedStatus: http.StatusOK,
 			validateResponse: func(t *testing.T, rec *httptest.ResponseRecorder) {

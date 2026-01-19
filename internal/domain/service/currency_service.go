@@ -35,11 +35,14 @@ func (s *CurrencyService) GetTotalBalance(ctx context.Context, userID string) (i
 // HasSufficientBalance 指定された金額の残高があるかチェック（無料通貨優先で計算）
 func (s *CurrencyService) HasSufficientBalance(ctx context.Context, userID string, amount int64) (bool, error) {
 	freeCurrency, err := s.currencyRepo.FindByUserIDAndType(ctx, userID, currency.CurrencyTypeFree)
-	if err != nil {
+	if err != nil && err != currency.ErrCurrencyNotFound {
 		return false, err
 	}
 
-	freeBalance := freeCurrency.Balance()
+	freeBalance := int64(0)
+	if freeCurrency != nil {
+		freeBalance = freeCurrency.Balance()
+	}
 	remainingAmount := amount
 
 	// 無料通貨で支払える分を差し引く
@@ -51,9 +54,14 @@ func (s *CurrencyService) HasSufficientBalance(ctx context.Context, userID strin
 
 	// 不足分を有料通貨で支払えるかチェック
 	paidCurrency, err := s.currencyRepo.FindByUserIDAndType(ctx, userID, currency.CurrencyTypePaid)
-	if err != nil {
+	if err != nil && err != currency.ErrCurrencyNotFound {
 		return false, err
 	}
 
-	return paidCurrency.Balance() >= remainingAmount, nil
+	paidBalance := int64(0)
+	if paidCurrency != nil {
+		paidBalance = paidCurrency.Balance()
+	}
+
+	return paidBalance >= remainingAmount, nil
 }

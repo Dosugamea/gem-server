@@ -16,7 +16,6 @@ import (
 	"gem-server/internal/domain/payment_request"
 	"gem-server/internal/domain/transaction"
 	otelinfra "gem-server/internal/infrastructure/observability/otel"
-	"gem-server/internal/infrastructure/persistence/mysql"
 )
 
 // PaymentApplicationService 決済アプリケーションサービス
@@ -24,7 +23,7 @@ type PaymentApplicationService struct {
 	currencyRepo       currency.CurrencyRepository
 	transactionRepo    transaction.TransactionRepository
 	paymentRequestRepo payment_request.PaymentRequestRepository
-	txManager          *mysql.TransactionManager
+	txManager          transaction.TransactionManager
 	logger             *otelinfra.Logger
 	metrics            *otelinfra.Metrics
 	tracer             trace.Tracer
@@ -36,7 +35,7 @@ func NewPaymentApplicationService(
 	currencyRepo currency.CurrencyRepository,
 	transactionRepo transaction.TransactionRepository,
 	paymentRequestRepo payment_request.PaymentRequestRepository,
-	txManager *mysql.TransactionManager,
+	txManager transaction.TransactionManager,
 	logger *otelinfra.Logger,
 	metrics *otelinfra.Metrics,
 ) *PaymentApplicationService {

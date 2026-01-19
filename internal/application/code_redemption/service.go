@@ -16,7 +16,6 @@ import (
 	"gem-server/internal/domain/redemption_code"
 	"gem-server/internal/domain/transaction"
 	otelinfra "gem-server/internal/infrastructure/observability/otel"
-	"gem-server/internal/infrastructure/persistence/mysql"
 )
 
 // CodeRedemptionApplicationService コード引き換えアプリケーションサービス
@@ -24,7 +23,7 @@ type CodeRedemptionApplicationService struct {
 	currencyRepo       currency.CurrencyRepository
 	transactionRepo    transaction.TransactionRepository
 	redemptionCodeRepo redemption_code.RedemptionCodeRepository
-	txManager          *mysql.TransactionManager
+	txManager          transaction.TransactionManager
 	logger             *otelinfra.Logger
 	metrics            *otelinfra.Metrics
 	tracer             trace.Tracer
@@ -36,7 +35,7 @@ func NewCodeRedemptionApplicationService(
 	currencyRepo currency.CurrencyRepository,
 	transactionRepo transaction.TransactionRepository,
 	redemptionCodeRepo redemption_code.RedemptionCodeRepository,
-	txManager *mysql.TransactionManager,
+	txManager transaction.TransactionManager,
 	logger *otelinfra.Logger,
 	metrics *otelinfra.Metrics,
 ) *CodeRedemptionApplicationService {

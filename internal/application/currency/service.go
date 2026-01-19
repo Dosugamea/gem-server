@@ -16,14 +16,13 @@ import (
 	"gem-server/internal/domain/service"
 	"gem-server/internal/domain/transaction"
 	otelinfra "gem-server/internal/infrastructure/observability/otel"
-	"gem-server/internal/infrastructure/persistence/mysql"
 )
 
 // CurrencyApplicationService 通貨アプリケーションサービス
 type CurrencyApplicationService struct {
 	currencyRepo    currency.CurrencyRepository
 	transactionRepo transaction.TransactionRepository
-	txManager       *mysql.TransactionManager
+	txManager       transaction.TransactionManager
 	currencyService *service.CurrencyService
 	logger          *otelinfra.Logger
 	metrics         *otelinfra.Metrics
@@ -35,7 +34,7 @@ type CurrencyApplicationService struct {
 func NewCurrencyApplicationService(
 	currencyRepo currency.CurrencyRepository,
 	transactionRepo transaction.TransactionRepository,
-	txManager *mysql.TransactionManager,
+	txManager transaction.TransactionManager,
 	currencyService *service.CurrencyService,
 	logger *otelinfra.Logger,
 	metrics *otelinfra.Metrics,

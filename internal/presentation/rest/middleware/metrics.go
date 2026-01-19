@@ -28,13 +28,13 @@ func MetricsMiddleware(metrics *otelinfra.Metrics) echo.MiddlewareFunc {
 			// エラーが発生した場合はエラー数を記録
 			if err != nil {
 				statusCode := c.Response().Status
-				
+
 				// echo.HTTPErrorの場合はエラーからステータスコードを取得
 				var httpErr *echo.HTTPError
 				if errors.As(err, &httpErr) {
 					statusCode = httpErr.Code
 				}
-				
+
 				// 4xx, 5xxエラーの場合のみ記録
 				if statusCode >= 400 {
 					errorType := "client_error"

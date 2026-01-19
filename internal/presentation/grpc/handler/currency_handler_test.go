@@ -655,7 +655,8 @@ func TestCurrencyHandler_ProcessPayment(t *testing.T) {
 				UserId:           "user123",
 				Amount:           "100",
 			},
-			setupMock:      func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mpr *MockPaymentRequestRepository, mtm *MockTransactionManager) {},
+			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mpr *MockPaymentRequestRepository, mtm *MockTransactionManager) {
+			},
 			expectedStatus: codes.InvalidArgument,
 		},
 		{
@@ -665,7 +666,8 @@ func TestCurrencyHandler_ProcessPayment(t *testing.T) {
 				UserId:           "",
 				Amount:           "100",
 			},
-			setupMock:      func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mpr *MockPaymentRequestRepository, mtm *MockTransactionManager) {},
+			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mpr *MockPaymentRequestRepository, mtm *MockTransactionManager) {
+			},
 			expectedStatus: codes.InvalidArgument,
 		},
 		{
@@ -675,7 +677,8 @@ func TestCurrencyHandler_ProcessPayment(t *testing.T) {
 				UserId:           "user123",
 				Amount:           "",
 			},
-			setupMock:      func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mpr *MockPaymentRequestRepository, mtm *MockTransactionManager) {},
+			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mpr *MockPaymentRequestRepository, mtm *MockTransactionManager) {
+			},
 			expectedStatus: codes.InvalidArgument,
 		},
 		{
@@ -685,7 +688,8 @@ func TestCurrencyHandler_ProcessPayment(t *testing.T) {
 				UserId:           "user123",
 				Amount:           "invalid",
 			},
-			setupMock:      func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mpr *MockPaymentRequestRepository, mtm *MockTransactionManager) {},
+			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mpr *MockPaymentRequestRepository, mtm *MockTransactionManager) {
+			},
 			expectedStatus: codes.InvalidArgument,
 		},
 		{
@@ -825,7 +829,8 @@ func TestCurrencyHandler_RedeemCode(t *testing.T) {
 				Code:   "",
 				UserId: "user123",
 			},
-			setupMock:      func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {},
+			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+			},
 			expectedStatus: codes.InvalidArgument,
 		},
 		{
@@ -834,7 +839,8 @@ func TestCurrencyHandler_RedeemCode(t *testing.T) {
 				Code:   "TESTCODE123",
 				UserId: "",
 			},
-			setupMock:      func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {},
+			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+			},
 			expectedStatus: codes.InvalidArgument,
 		},
 		{
@@ -1032,7 +1038,7 @@ func TestCurrencyHandler_GetTransactionHistory(t *testing.T) {
 				UserId:       "user123",
 				Limit:        10,
 				Offset:       0,
-				CurrencyType:  "paid",
+				CurrencyType: "paid",
 			},
 			setupMock: func(mtr *MockTransactionRepository) {
 				txns := []*transaction.Transaction{}
@@ -1113,10 +1119,10 @@ func TestCurrencyHandler_handleError(t *testing.T) {
 	handler, _, _, _, _, _ := setupTestHandler(t)
 
 	tests := []struct {
-		name           string
-		err            error
-		expectedCode   codes.Code
-		expectedMsg    string
+		name         string
+		err          error
+		expectedCode codes.Code
+		expectedMsg  string
 	}{
 		{
 			name:         "currency.ErrInsufficientBalance -> FailedPrecondition",

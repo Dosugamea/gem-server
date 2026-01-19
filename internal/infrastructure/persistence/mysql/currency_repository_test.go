@@ -24,17 +24,17 @@ func TestCurrencyRepository_FindByUserIDAndType(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
-		userID      string
+		name         string
+		userID       string
 		currencyType currency.CurrencyType
-		setupMock   func()
-		want        *currency.Currency
-		wantError   bool
-		errorType   error
+		setupMock    func()
+		want         *currency.Currency
+		wantError    bool
+		errorType    error
 	}{
 		{
-			name:        "正常系: 通貨が見つかる",
-			userID:      "user123",
+			name:         "正常系: 通貨が見つかる",
+			userID:       "user123",
 			currencyType: currency.CurrencyTypePaid,
 			setupMock: func() {
 				rows := sqlmock.NewRows([]string{"user_id", "currency_type", "balance", "version"}).
@@ -47,8 +47,8 @@ func TestCurrencyRepository_FindByUserIDAndType(t *testing.T) {
 			wantError: false,
 		},
 		{
-			name:        "異常系: 通貨が見つからない",
-			userID:      "user123",
+			name:         "異常系: 通貨が見つからない",
+			userID:       "user123",
 			currencyType: currency.CurrencyTypePaid,
 			setupMock: func() {
 				mock.ExpectQuery(`SELECT user_id, currency_type, balance, version`).
@@ -60,8 +60,8 @@ func TestCurrencyRepository_FindByUserIDAndType(t *testing.T) {
 			errorType: currency.ErrCurrencyNotFound,
 		},
 		{
-			name:        "異常系: DBエラー",
-			userID:      "user123",
+			name:         "異常系: DBエラー",
+			userID:       "user123",
 			currencyType: currency.CurrencyTypePaid,
 			setupMock: func() {
 				mock.ExpectQuery(`SELECT user_id, currency_type, balance, version`).

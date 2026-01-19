@@ -206,7 +206,7 @@ func setupTestServer(t *testing.T) (*Server, *MockCurrencyRepository, *MockTrans
 
 	// bufconnを使用してメモリ内リスナーを作成（実際のポートバインドを回避）
 	listener := bufconn.Listen(1024 * 1024) // 1MB buffer
-	port := 8081 // テスト用のポート番号
+	port := 8081                            // テスト用のポート番号
 
 	server, err := NewServerWithListener(
 		cfg,

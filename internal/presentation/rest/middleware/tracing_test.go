@@ -115,7 +115,7 @@ func TestTracingMiddleware_ExtractsTraceContext(t *testing.T) {
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
-	
+
 	// トレースコンテキストをヘッダーに設定
 	propagator := propagation.TraceContext{}
 	carrier := propagation.HeaderCarrier(req.Header)

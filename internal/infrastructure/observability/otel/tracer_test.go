@@ -26,7 +26,7 @@ func TestInitTracer_Disabled(t *testing.T) {
 
 func TestInitTracer_OTLP(t *testing.T) {
 	cfg := &config.OpenTelemetryConfig{
-		Enabled:         true,
+		Enabled:        true,
 		TraceExporter:  "otlp",
 		OTLPEndpoint:   "http://localhost:4318",
 		OTLPInsecure:   true,
@@ -98,7 +98,7 @@ func TestTracer(t *testing.T) {
 
 func TestInitTracer_OTLPInsecure(t *testing.T) {
 	cfg := &config.OpenTelemetryConfig{
-		Enabled:         true,
+		Enabled:        true,
 		TraceExporter:  "otlp",
 		OTLPEndpoint:   "http://localhost:4318",
 		OTLPInsecure:   false, // セキュア接続
@@ -121,7 +121,7 @@ func TestInitTracer_OTLPInsecure(t *testing.T) {
 
 func TestInitTracer_ResourceCreation(t *testing.T) {
 	cfg := &config.OpenTelemetryConfig{
-		Enabled:         true,
+		Enabled:        true,
 		TraceExporter:  "stdout",
 		ServiceName:    "test-service",
 		ServiceVersion: "1.0.0",

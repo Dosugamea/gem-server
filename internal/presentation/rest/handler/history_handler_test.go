@@ -21,12 +21,12 @@ import (
 
 func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 	tests := []struct {
-		name           string
-		userID         string
-		tokenUserID    string
-		queryParams    map[string]string
-		setupMock      func(*MockTransactionRepository)
-		expectedStatus int
+		name             string
+		userID           string
+		tokenUserID      string
+		queryParams      map[string]string
+		setupMock        func(*MockTransactionRepository)
+		expectedStatus   int
 		validateResponse func(*testing.T, *httptest.ResponseRecorder)
 	}{
 		{

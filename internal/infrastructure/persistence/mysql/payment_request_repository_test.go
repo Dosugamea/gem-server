@@ -59,7 +59,7 @@ func TestPaymentRequestRepository_Save(t *testing.T) {
 			wantError: false,
 		},
 		{
-			name: "異常系: DBエラー",
+			name:           "異常系: DBエラー",
 			paymentRequest: payment_request.NewPaymentRequest("pr123", "user123", 1000, "JPY", currency.CurrencyTypePaid),
 			setupMock: func() {
 				mock.ExpectExec(`INSERT INTO payment_requests`).
@@ -97,15 +97,15 @@ func TestPaymentRequestRepository_FindByPaymentRequestID(t *testing.T) {
 	}
 
 	tests := []struct {
-		name            string
+		name             string
 		paymentRequestID string
-		setupMock       func()
-		want            *payment_request.PaymentRequest
-		wantError       bool
-		errorType       error
+		setupMock        func()
+		want             *payment_request.PaymentRequest
+		wantError        bool
+		errorType        error
 	}{
 		{
-			name:            "正常系: PaymentRequestが見つかる（pending）",
+			name:             "正常系: PaymentRequestが見つかる（pending）",
 			paymentRequestID: "pr123",
 			setupMock: func() {
 				rows := sqlmock.NewRows([]string{
@@ -121,7 +121,7 @@ func TestPaymentRequestRepository_FindByPaymentRequestID(t *testing.T) {
 			wantError: false,
 		},
 		{
-			name:            "正常系: PaymentRequestが見つかる（completed）",
+			name:             "正常系: PaymentRequestが見つかる（completed）",
 			paymentRequestID: "pr123",
 			setupMock: func() {
 				rows := sqlmock.NewRows([]string{
@@ -137,7 +137,7 @@ func TestPaymentRequestRepository_FindByPaymentRequestID(t *testing.T) {
 			wantError: false,
 		},
 		{
-			name:            "異常系: PaymentRequestが見つからない",
+			name:             "異常系: PaymentRequestが見つからない",
 			paymentRequestID: "pr123",
 			setupMock: func() {
 				mock.ExpectQuery(`SELECT`).
@@ -149,7 +149,7 @@ func TestPaymentRequestRepository_FindByPaymentRequestID(t *testing.T) {
 			errorType: payment_request.ErrPaymentRequestNotFound,
 		},
 		{
-			name:            "異常系: DBエラー",
+			name:             "異常系: DBエラー",
 			paymentRequestID: "pr123",
 			setupMock: func() {
 				mock.ExpectQuery(`SELECT`).

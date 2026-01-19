@@ -25,7 +25,7 @@ func TestInitMeter_Disabled(t *testing.T) {
 
 func TestInitMeter_OTLP(t *testing.T) {
 	cfg := &config.OpenTelemetryConfig{
-		Enabled:          true,
+		Enabled:         true,
 		MetricsExporter: "otlp",
 		OTLPEndpoint:    "http://localhost:4318",
 		OTLPInsecure:    true,
@@ -49,10 +49,10 @@ func TestInitMeter_OTLP(t *testing.T) {
 
 func TestInitMeter_Stdout(t *testing.T) {
 	cfg := &config.OpenTelemetryConfig{
-		Enabled:          true,
+		Enabled:         true,
 		MetricsExporter: "stdout",
-		ServiceName:      "test-service",
-		ServiceVersion:   "1.0.0",
+		ServiceName:     "test-service",
+		ServiceVersion:  "1.0.0",
 	}
 
 	shutdown, err := InitMeter(cfg)
@@ -66,10 +66,10 @@ func TestInitMeter_Stdout(t *testing.T) {
 
 func TestInitMeter_UnsupportedExporter(t *testing.T) {
 	cfg := &config.OpenTelemetryConfig{
-		Enabled:          true,
+		Enabled:         true,
 		MetricsExporter: "unsupported",
-		ServiceName:      "test-service",
-		ServiceVersion:   "1.0.0",
+		ServiceName:     "test-service",
+		ServiceVersion:  "1.0.0",
 	}
 
 	shutdown, err := InitMeter(cfg)
@@ -86,12 +86,12 @@ func TestMeter(t *testing.T) {
 
 func TestInitMeter_OTLPInsecure(t *testing.T) {
 	cfg := &config.OpenTelemetryConfig{
-		Enabled:          true,
+		Enabled:         true,
 		MetricsExporter: "otlp",
 		OTLPEndpoint:    "http://localhost:4318",
 		OTLPInsecure:    false, // セキュア接続
-		ServiceName:      "test-service",
-		ServiceVersion:   "1.0.0",
+		ServiceName:     "test-service",
+		ServiceVersion:  "1.0.0",
 	}
 
 	// 実際のOTLPエンドポイントに接続しようとするため、エラーが発生する可能性がある
@@ -109,10 +109,10 @@ func TestInitMeter_OTLPInsecure(t *testing.T) {
 
 func TestInitMeter_ResourceCreation(t *testing.T) {
 	cfg := &config.OpenTelemetryConfig{
-		Enabled:          true,
+		Enabled:         true,
 		MetricsExporter: "stdout",
-		ServiceName:      "test-service",
-		ServiceVersion:   "1.0.0",
+		ServiceName:     "test-service",
+		ServiceVersion:  "1.0.0",
 	}
 
 	shutdown, err := InitMeter(cfg)
@@ -127,10 +127,10 @@ func TestInitMeter_ResourceCreation(t *testing.T) {
 
 func TestInitMeter_MultipleCalls(t *testing.T) {
 	cfg := &config.OpenTelemetryConfig{
-		Enabled:          true,
+		Enabled:         true,
 		MetricsExporter: "stdout",
-		ServiceName:      "test-service",
-		ServiceVersion:   "1.0.0",
+		ServiceName:     "test-service",
+		ServiceVersion:  "1.0.0",
 	}
 
 	// 複数回初期化を試みる
@@ -161,10 +161,10 @@ func TestMeter_GetMeter(t *testing.T) {
 func TestInitMeter_DefaultConfig(t *testing.T) {
 	// デフォルト設定でメーターを初期化
 	cfg := &config.OpenTelemetryConfig{
-		Enabled:          true,
+		Enabled:         true,
 		MetricsExporter: "stdout",
-		ServiceName:      "gem-server",
-		ServiceVersion:   "1.0.0",
+		ServiceName:     "gem-server",
+		ServiceVersion:  "1.0.0",
 	}
 
 	shutdown, err := InitMeter(cfg)

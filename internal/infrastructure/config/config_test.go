@@ -113,7 +113,7 @@ func TestLoad(t *testing.T) {
 				os.Unsetenv("DB_HOST")
 				os.Unsetenv("DB_NAME")
 			},
-			wantError: true,
+			wantError:   true,
 			checkConfig: nil,
 		},
 	}

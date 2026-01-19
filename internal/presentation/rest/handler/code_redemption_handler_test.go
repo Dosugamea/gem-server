@@ -24,18 +24,18 @@ import (
 
 func TestCodeRedemptionHandler_RedeemCode(t *testing.T) {
 	tests := []struct {
-		name           string
-		tokenUserID    string
-		requestBody    map[string]interface{}
-		setupMock      func(*MockCurrencyRepository, *MockTransactionRepository, *MockRedemptionCodeRepository, *MockTransactionManager)
-		expectedStatus int
+		name             string
+		tokenUserID      string
+		requestBody      map[string]interface{}
+		setupMock        func(*MockCurrencyRepository, *MockTransactionRepository, *MockRedemptionCodeRepository, *MockTransactionManager)
+		expectedStatus   int
 		validateResponse func(*testing.T, *httptest.ResponseRecorder)
 	}{
 		{
 			name:        "正常系: コード引き換え成功",
 			tokenUserID: "user123",
 			requestBody: map[string]interface{}{
-				"code":   "TESTCODE123",
+				"code":    "TESTCODE123",
 				"user_id": "user123",
 			},
 			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtx *MockTransactionManager) {
@@ -98,7 +98,7 @@ func TestCodeRedemptionHandler_RedeemCode(t *testing.T) {
 			name:        "異常系: user_id不一致",
 			tokenUserID: "user456",
 			requestBody: map[string]interface{}{
-				"code":   "TESTCODE123",
+				"code":    "TESTCODE123",
 				"user_id": "user123",
 			},
 			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtx *MockTransactionManager) {
@@ -109,7 +109,7 @@ func TestCodeRedemptionHandler_RedeemCode(t *testing.T) {
 			name:        "異常系: コードが見つからない",
 			tokenUserID: "user123",
 			requestBody: map[string]interface{}{
-				"code":   "INVALIDCODE",
+				"code":    "INVALIDCODE",
 				"user_id": "user123",
 			},
 			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtx *MockTransactionManager) {
@@ -121,7 +121,7 @@ func TestCodeRedemptionHandler_RedeemCode(t *testing.T) {
 			name:        "異常系: ユーザーが既に引き換え済み",
 			tokenUserID: "user123",
 			requestBody: map[string]interface{}{
-				"code":   "TESTCODE123",
+				"code":    "TESTCODE123",
 				"user_id": "user123",
 			},
 			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtx *MockTransactionManager) {
@@ -144,7 +144,7 @@ func TestCodeRedemptionHandler_RedeemCode(t *testing.T) {
 			name:        "異常系: コードが無効",
 			tokenUserID: "user123",
 			requestBody: map[string]interface{}{
-				"code":   "EXPIREDCODE",
+				"code":    "EXPIREDCODE",
 				"user_id": "user123",
 			},
 			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtx *MockTransactionManager) {

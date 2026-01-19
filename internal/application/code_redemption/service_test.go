@@ -137,7 +137,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 					codeType,
 					currency.CurrencyTypePaid,
 					1000,
-					1, // maxUses
+					1,                             // maxUses
 					time.Now().Add(-24*time.Hour), // validFrom
 					time.Now().Add(24*time.Hour),  // validUntil
 					map[string]interface{}{},
@@ -184,7 +184,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 					codeType,
 					currency.CurrencyTypeFree,
 					500,
-					1, // maxUses
+					1,                             // maxUses
 					time.Now().Add(-24*time.Hour), // validFrom
 					time.Now().Add(24*time.Hour),  // validUntil
 					map[string]interface{}{},
@@ -241,7 +241,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 					codeType,
 					currency.CurrencyTypePaid,
 					1000,
-					1, // maxUses
+					1,                             // maxUses
 					time.Now().Add(-48*time.Hour), // validFrom
 					time.Now().Add(-24*time.Hour), // validUntil - 期限切れ
 					map[string]interface{}{},
@@ -267,7 +267,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 					codeType,
 					currency.CurrencyTypePaid,
 					1000,
-					1, // maxUses
+					1,                             // maxUses
 					time.Now().Add(-24*time.Hour), // validFrom
 					time.Now().Add(24*time.Hour),  // validUntil
 					map[string]interface{}{},
@@ -294,7 +294,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 					codeType,
 					currency.CurrencyTypePaid,
 					1000,
-					1, // maxUses
+					1,                             // maxUses
 					time.Now().Add(-24*time.Hour), // validFrom
 					time.Now().Add(24*time.Hour),  // validUntil
 					map[string]interface{}{},
@@ -338,7 +338,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 					codeType,
 					currency.CurrencyTypePaid,
 					1000,
-					1, // maxUses
+					1,                             // maxUses
 					time.Now().Add(-24*time.Hour), // validFrom
 					time.Now().Add(24*time.Hour),  // validUntil
 					map[string]interface{}{},
@@ -365,7 +365,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 					codeType,
 					currency.CurrencyTypePaid,
 					1000,
-					1, // maxUses
+					1,                             // maxUses
 					time.Now().Add(-24*time.Hour), // validFrom
 					time.Now().Add(24*time.Hour),  // validUntil
 					map[string]interface{}{},
@@ -390,7 +390,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 					codeType,
 					currency.CurrencyTypeFree,
 					500,
-					1, // maxUses
+					1,                             // maxUses
 					time.Now().Add(-24*time.Hour), // validFrom
 					time.Now().Add(24*time.Hour),  // validUntil
 					map[string]interface{}{},
@@ -417,7 +417,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 					codeType,
 					currency.CurrencyTypePaid,
 					1000,
-					1, // maxUses
+					1,                             // maxUses
 					time.Now().Add(-24*time.Hour), // validFrom
 					time.Now().Add(24*time.Hour),  // validUntil
 					map[string]interface{}{},
@@ -446,7 +446,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 					codeType,
 					currency.CurrencyTypePaid,
 					1000,
-					1, // maxUses
+					1,                             // maxUses
 					time.Now().Add(-24*time.Hour), // validFrom
 					time.Now().Add(24*time.Hour),  // validUntil
 					map[string]interface{}{},
@@ -475,7 +475,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 					codeType,
 					currency.CurrencyTypePaid,
 					1000,
-					1, // maxUses
+					1,                             // maxUses
 					time.Now().Add(-24*time.Hour), // validFrom
 					time.Now().Add(24*time.Hour),  // validUntil
 					map[string]interface{}{},

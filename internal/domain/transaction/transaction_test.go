@@ -15,37 +15,37 @@ func TestNewTransaction(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		transactionID  string
-		userID         string
+		name            string
+		transactionID   string
+		userID          string
 		transactionType TransactionType
-		currencyType   currency.CurrencyType
-		amount         int64
-		balanceBefore  int64
-		balanceAfter   int64
-		status         TransactionStatus
-		metadata       map[string]interface{}
-		want           *Transaction
+		currencyType    currency.CurrencyType
+		amount          int64
+		balanceBefore   int64
+		balanceAfter    int64
+		status          TransactionStatus
+		metadata        map[string]interface{}
+		want            *Transaction
 	}{
 		{
-			name:           "正常系: 付与トランザクション",
-			transactionID:  "tx123",
-			userID:         "user123",
+			name:            "正常系: 付与トランザクション",
+			transactionID:   "tx123",
+			userID:          "user123",
 			transactionType: TransactionTypeGrant,
-			currencyType:   currency.CurrencyTypePaid,
-			amount:         1000,
-			balanceBefore:  0,
-			balanceAfter:   1000,
-			status:         TransactionStatusCompleted,
-			metadata:       metadata,
+			currencyType:    currency.CurrencyTypePaid,
+			amount:          1000,
+			balanceBefore:   0,
+			balanceAfter:    1000,
+			status:          TransactionStatusCompleted,
+			metadata:        metadata,
 			want: &Transaction{
 				transactionID:    "tx123",
 				userID:           "user123",
 				transactionType:  TransactionTypeGrant,
 				currencyType:     currency.CurrencyTypePaid,
 				amount:           1000,
-				balanceBefore:     0,
-				balanceAfter:      1000,
+				balanceBefore:    0,
+				balanceAfter:     1000,
 				status:           TransactionStatusCompleted,
 				paymentRequestID: nil,
 				metadata:         metadata,
@@ -93,38 +93,38 @@ func TestTransaction_SetPaymentRequestID(t *testing.T) {
 	)
 
 	assert.Nil(t, tx.PaymentRequestID())
-	
+
 	paymentRequestID := "pr123"
 	tx.SetPaymentRequestID(paymentRequestID)
-	
+
 	assert.NotNil(t, tx.PaymentRequestID())
 	assert.Equal(t, paymentRequestID, *tx.PaymentRequestID())
 }
 
 func TestTransaction_UpdateStatus(t *testing.T) {
 	tests := []struct {
-		name        string
+		name          string
 		initialStatus TransactionStatus
-		newStatus   TransactionStatus
-		wantError   bool
+		newStatus     TransactionStatus
+		wantError     bool
 	}{
 		{
-			name:        "正常系: pending -> completed",
+			name:          "正常系: pending -> completed",
 			initialStatus: TransactionStatusPending,
-			newStatus:   TransactionStatusCompleted,
-			wantError:   false,
+			newStatus:     TransactionStatusCompleted,
+			wantError:     false,
 		},
 		{
-			name:        "正常系: pending -> failed",
+			name:          "正常系: pending -> failed",
 			initialStatus: TransactionStatusPending,
-			newStatus:   TransactionStatusFailed,
-			wantError:   false,
+			newStatus:     TransactionStatusFailed,
+			wantError:     false,
 		},
 		{
-			name:        "異常系: 無効なステータス",
+			name:          "異常系: 無効なステータス",
 			initialStatus: TransactionStatusPending,
-			newStatus:   TransactionStatus("invalid"),
-			wantError:   true,
+			newStatus:     TransactionStatus("invalid"),
+			wantError:     true,
 		},
 	}
 

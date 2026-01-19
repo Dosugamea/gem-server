@@ -151,15 +151,15 @@ func TestTransactionRepository_FindByTransactionID(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
+		name          string
 		transactionID string
-		setupMock   func()
-		want        *transaction.Transaction
-		wantError   bool
-		errorType   error
+		setupMock     func()
+		want          *transaction.Transaction
+		wantError     bool
+		errorType     error
 	}{
 		{
-			name:        "正常系: トランザクションが見つかる",
+			name:          "正常系: トランザクションが見つかる",
 			transactionID: "txn123",
 			setupMock: func() {
 				rows := sqlmock.NewRows([]string{
@@ -175,7 +175,7 @@ func TestTransactionRepository_FindByTransactionID(t *testing.T) {
 			wantError: false,
 		},
 		{
-			name:        "異常系: トランザクションが見つからない",
+			name:          "異常系: トランザクションが見つからない",
 			transactionID: "txn123",
 			setupMock: func() {
 				mock.ExpectQuery(`SELECT`).
@@ -187,7 +187,7 @@ func TestTransactionRepository_FindByTransactionID(t *testing.T) {
 			errorType: transaction.ErrTransactionNotFound,
 		},
 		{
-			name:        "異常系: DBエラー",
+			name:          "異常系: DBエラー",
 			transactionID: "txn123",
 			setupMock: func() {
 				mock.ExpectQuery(`SELECT`).
@@ -338,15 +338,15 @@ func TestTransactionRepository_FindByPaymentRequestID(t *testing.T) {
 	}
 
 	tests := []struct {
-		name            string
+		name             string
 		paymentRequestID string
-		setupMock       func()
-		want            *transaction.Transaction
-		wantError       bool
-		errorType       error
+		setupMock        func()
+		want             *transaction.Transaction
+		wantError        bool
+		errorType        error
 	}{
 		{
-			name:            "正常系: PaymentRequestIDでトランザクションが見つかる",
+			name:             "正常系: PaymentRequestIDでトランザクションが見つかる",
 			paymentRequestID: "pr123",
 			setupMock: func() {
 				rows := sqlmock.NewRows([]string{
@@ -362,7 +362,7 @@ func TestTransactionRepository_FindByPaymentRequestID(t *testing.T) {
 			wantError: false,
 		},
 		{
-			name:            "異常系: トランザクションが見つからない",
+			name:             "異常系: トランザクションが見つからない",
 			paymentRequestID: "pr123",
 			setupMock: func() {
 				mock.ExpectQuery(`SELECT`).

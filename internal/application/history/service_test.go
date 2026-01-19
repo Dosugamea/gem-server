@@ -103,8 +103,8 @@ func TestHistoryApplicationService_GetTransactionHistory(t *testing.T) {
 			name: "正常系: 通貨タイプでフィルタリング",
 			req: &GetTransactionHistoryRequest{
 				UserID:       "user123",
-				Limit:       10,
-				Offset:      0,
+				Limit:        10,
+				Offset:       0,
 				CurrencyType: "paid",
 			},
 			setupMocks: func(mtr *MockTransactionRepository) {
@@ -187,7 +187,7 @@ func TestHistoryApplicationService_GetTransactionHistory(t *testing.T) {
 			name: "正常系: デフォルト値の設定",
 			req: &GetTransactionHistoryRequest{
 				UserID: "user123",
-				Limit:  0, // デフォルト値に設定される
+				Limit:  0,  // デフォルト値に設定される
 				Offset: -1, // 0に設定される
 			},
 			setupMocks: func(mtr *MockTransactionRepository) {

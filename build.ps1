@@ -8,7 +8,7 @@ param(
 )
 
 $BinaryName = "gem-server"
-$CmdPath = "cmd/main.go"
+$CmdPath = "cmd/server/main.go"
 $BuildDir = "bin"
 $CoverageDir = "coverage"
 

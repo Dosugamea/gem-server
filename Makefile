@@ -2,7 +2,7 @@
 
 # 変数定義
 BINARY_NAME=gem-server
-CMD_PATH=cmd/main.go
+CMD_PATH=cmd/server/main.go
 BUILD_DIR=bin
 COVERAGE_DIR=coverage
 MIGRATIONS_DIR=migrations

@@ -38,6 +38,27 @@ func NewServer(
 	redemptionService *redemptionapp.CodeRedemptionApplicationService,
 	historyService *historyapp.HistoryApplicationService,
 ) (*Server, error) {
+	port := cfg.Server.Port + 1 // REST APIのポート+1を使用
+	address := fmt.Sprintf(":%d", port)
+	listener, err := net.Listen("tcp", address)
+	if err != nil {
+		return nil, fmt.Errorf("failed to listen on %s: %w", address, err)
+	}
+
+	return NewServerWithListener(cfg, logger, currencyService, paymentService, redemptionService, historyService, listener, port)
+}
+
+// NewServerWithListener リスナーを指定してgRPCサーバーを作成（テスト用）
+func NewServerWithListener(
+	cfg *config.Config,
+	logger *otelinfra.Logger,
+	currencyService *currencyapp.CurrencyApplicationService,
+	paymentService *paymentapp.PaymentApplicationService,
+	redemptionService *redemptionapp.CodeRedemptionApplicationService,
+	historyService *historyapp.HistoryApplicationService,
+	listener net.Listener,
+	port int,
+) (*Server, error) {
 	// インターセプターを設定
 	opts := []grpc.ServerOption{
 		grpc.UnaryInterceptor(interceptor.AuthInterceptor(&cfg.JWT, logger)),
@@ -69,14 +90,6 @@ func NewServer(
 	// リフレクションを有効化（開発環境用）
 	if cfg.Environment == "development" {
 		reflection.Register(grpcServer)
-	}
-
-	// リスナーを作成
-	port := cfg.Server.Port + 1 // REST APIのポート+1を使用
-	address := fmt.Sprintf(":%d", port)
-	listener, err := net.Listen("tcp", address)
-	if err != nil {
-		return nil, fmt.Errorf("failed to listen on %s: %w", address, err)
 	}
 
 	return &Server{

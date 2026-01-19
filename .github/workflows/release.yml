@@ -1,0 +1,188 @@
+name: Create Release
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  GO_VERSION: "1.24"
+
+jobs:
+  # リリース作成ジョブ
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    # mainブランチへのpush時（developからのマージを含む）に実行
+    # ただし、タグのpush時はスキップ（無限ループ防止）
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && !startsWith(github.event.head_commit.message, 'Release')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 全履歴を取得（タグ検索のため）
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          # 最新のリリースタグを取得
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "Latest tag: $LATEST_TAG"
+
+      - name: Calculate next version
+        id: calc_version
+        run: |
+          LATEST_TAG="${{ steps.get_tag.outputs.latest_tag }}"
+
+          # vプレフィックスを削除
+          VERSION="${LATEST_TAG#v}"
+
+          # セマンティックバージョニング: major.minor.patch
+          # デフォルト値の設定
+          MAJOR=0
+          MINOR=0
+          PATCH=0
+
+          if [ "$VERSION" != "0.0.0" ]; then
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          fi
+
+          # コミットメッセージからバージョンタイプを判定
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+
+          # developブランチからのマージを検出
+          IS_MERGE_FROM_DEVELOP=false
+          if echo "$COMMIT_MSG" | grep -qiE "Merge.*develop|Merge pull request.*develop"; then
+            IS_MERGE_FROM_DEVELOP=true
+          fi
+
+          # バージョンタイプの判定
+          if echo "$COMMIT_MSG" | grep -qiE "\[major\]|breaking|BREAKING"; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+            TYPE="major"
+          elif echo "$COMMIT_MSG" | grep -qiE "\[minor\]|feat|feature|新機能"; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+            TYPE="minor"
+          elif [ "$IS_MERGE_FROM_DEVELOP" = "true" ]; then
+            # developからのマージ時はminorバージョンを上げる
+            MINOR=$((MINOR + 1))
+            PATCH=0
+            TYPE="minor"
+          else
+            PATCH=$((PATCH + 1))
+            TYPE="patch"
+          fi
+
+          NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "version_type=$TYPE" >> $GITHUB_OUTPUT
+          echo "Calculated version: $NEW_VERSION ($TYPE)"
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          LATEST_TAG="${{ steps.get_tag.outputs.latest_tag }}"
+          NEW_VERSION="${{ steps.calc_version.outputs.new_version }}"
+
+          # 前回のリリース以降のコミットを取得
+          if [ "$LATEST_TAG" = "v0.0.0" ]; then
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            COMMITS=$(git log ${LATEST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          # リリースノートを生成
+          NOTES="# Release $NEW_VERSION
+
+          ## Changes
+
+          $COMMITS
+
+          ## Installation
+
+          \`\`\`bash
+          docker pull ${{ secrets.DOCKER_REGISTRY }}/gem-server:$NEW_VERSION
+          \`\`\`
+
+          ## Full Changelog
+
+          Compare: ${LATEST_TAG}...${NEW_VERSION}"
+
+          echo "$NOTES" > release_notes.md
+          echo "Release notes generated"
+
+      - name: Check if tag already exists
+        id: check_tag
+        run: |
+          NEW_VERSION="${{ steps.calc_version.outputs.new_version }}"
+          if git rev-parse "$NEW_VERSION" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Tag $NEW_VERSION already exists, skipping release creation"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Tag $NEW_VERSION does not exist, proceeding with release"
+          fi
+
+      - name: Create Git tag
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          NEW_VERSION="${{ steps.calc_version.outputs.new_version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION"
+          git push origin "$NEW_VERSION"
+
+      - name: Create GitHub Release
+        if: steps.check_tag.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.calc_version.outputs.new_version }}
+          name: Release ${{ steps.calc_version.outputs.new_version }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and upload release artifacts
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          NEW_VERSION="${{ steps.calc_version.outputs.new_version }}"
+
+          # バイナリをビルド
+          mkdir -p release
+          GOOS=linux GOARCH=amd64 go build -o release/gem-server-linux-amd64 ./cmd/server
+          GOOS=linux GOARCH=arm64 go build -o release/gem-server-linux-arm64 ./cmd/server
+          GOOS=windows GOARCH=amd64 go build -o release/gem-server-windows-amd64.exe ./cmd/server
+          GOOS=darwin GOARCH=amd64 go build -o release/gem-server-darwin-amd64 ./cmd/server
+          GOOS=darwin GOARCH=arm64 go build -o release/gem-server-darwin-arm64 ./cmd/server
+
+          # アーカイブを作成
+          cd release
+          tar -czf gem-server-linux-amd64.tar.gz gem-server-linux-amd64
+          tar -czf gem-server-linux-arm64.tar.gz gem-server-linux-arm64
+          zip gem-server-windows-amd64.zip gem-server-windows-amd64.exe
+          tar -czf gem-server-darwin-amd64.tar.gz gem-server-darwin-amd64
+          tar -czf gem-server-darwin-arm64.tar.gz gem-server-darwin-arm64
+          cd ..
+
+      - name: Upload release assets
+        if: steps.check_tag.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*.tar.gz
+            release/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

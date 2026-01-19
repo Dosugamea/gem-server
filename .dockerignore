@@ -1,0 +1,51 @@
+# Git関連
+.git
+.gitignore
+.gitattributes
+
+# ドキュメント
+*.md
+docs/
+.cursor/
+
+# テスト関連
+*_test.go
+coverage/
+coverage_*
+
+# ビルド成果物
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# IDE関連
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 環境変数ファイル（本番では別途設定）
+.env
+.env.*
+!.env.example
+
+# ログファイル
+*.log
+
+# 一時ファイル
+tmp/
+temp/
+*.tmp
+
+# OS関連
+.DS_Store
+Thumbs.db
+
+# その他
+continue.md
+Makefile
+build.ps1
+scripts/

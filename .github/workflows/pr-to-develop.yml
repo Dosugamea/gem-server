@@ -1,0 +1,85 @@
+name: PR to Develop - Format & Test
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+env:
+  GO_VERSION: "1.24"
+
+jobs:
+  # フォーマットチェックとテストジョブ
+  format-and-test:
+    name: Format Check & Tests
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: gem_db_test
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost -u root -prootpassword"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Format check
+        run: |
+          echo "Checking code format..."
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+            echo "❌ Code is not formatted. Please run 'go fmt ./...'"
+            echo ""
+            echo "Files that need formatting:"
+            gofmt -s -l .
+            exit 1
+          fi
+          echo "✅ Code format is correct"
+
+      - name: Run tests
+        env:
+          DB_HOST: localhost
+          DB_PORT: 3306
+          DB_USER: test_user
+          DB_PASSWORD: test_password
+          DB_NAME: gem_db_test
+          JWT_SECRET: test-secret-key-for-ci
+          OTEL_ENABLED: false
+        run: |
+          echo "Running tests..."
+          go test -v -race -coverprofile=coverage.out ./...
+          echo "✅ All tests passed"
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.out
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false

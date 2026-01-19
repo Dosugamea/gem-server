@@ -67,13 +67,36 @@ internal/
 
 ### インストール
 
+#### ローカル環境でのセットアップ
+
 ```bash
 # 依存パッケージのインストール
 go mod download
 
 # ビルド
-go build -o bin/gem-server cmd/main.go
+go build -o bin/gem-server ./cmd/server
 ```
+
+#### Dockerを使用したセットアップ（推奨）
+
+```bash
+# Docker Composeを使用して開発環境を起動
+docker-compose up -d
+
+# ログを確認
+docker-compose logs -f app
+
+# 停止
+docker-compose down
+```
+
+Docker Composeを使用すると、以下のサービスが自動的に起動します：
+- **MySQL**: データベースサーバー（ポート3306）
+- **Redis**: キャッシュサーバー（ポート6379、オプション）
+- **Jaeger**: トレーシングUI（ポート16686、オプション）
+- **アプリケーション**: REST APIサーバー（ポート8080）
+
+マイグレーションは自動的に実行されます。
 
 ### 環境変数
 
@@ -103,7 +126,10 @@ SERVER_PORT=8080
 make build
 
 # または直接goコマンドを使用
-go build -o bin/gem-server cmd/main.go
+go build -o bin/gem-server ./cmd/server
+
+# Dockerイメージをビルド
+docker build -t gem-server:latest .
 ```
 
 ### テスト
@@ -120,8 +146,87 @@ go test -cover ./...
 
 ```bash
 # 開発サーバー起動
-go run cmd/main.go
+go run ./cmd/server
+
+# Docker Composeで実行
+docker-compose up
+
+# Dockerイメージから実行
+docker run -p 8080:8080 \
+  -e DB_HOST=mysql \
+  -e DB_USER=gem_user \
+  -e DB_PASSWORD=gem_password \
+  -e DB_NAME=gem_db \
+  -e JWT_SECRET=your-secret-key \
+  gem-server:latest
 ```
+
+## Docker
+
+### Docker Compose
+
+開発環境を簡単にセットアップするには、`docker-compose.yml`を使用します：
+
+```bash
+# 全サービスを起動
+docker-compose up -d
+
+# 特定のサービスのみ起動
+docker-compose up -d mysql redis
+
+# ログを確認
+docker-compose logs -f app
+
+# サービスを停止
+docker-compose down
+
+# ボリュームも含めて削除
+docker-compose down -v
+```
+
+### 環境変数の設定
+
+Docker Composeを使用する場合、環境変数は`docker-compose.yml`で設定されています。本番環境では、`.env`ファイルを作成するか、環境変数を直接設定してください：
+
+```bash
+# .envファイルを作成
+cp .env.example .env
+# .envファイルを編集して必要な値を設定
+
+# 環境変数を指定して起動
+docker-compose --env-file .env up -d
+```
+
+### カスタムDockerイメージ
+
+```bash
+# イメージをビルド
+docker build -t gem-server:latest .
+
+# イメージを実行
+docker run -p 8080:8080 \
+  --env-file .env \
+  gem-server:latest
+```
+
+## CI/CD
+
+GitHub Actionsを使用したCI/CDパイプラインが設定されています（`.github/workflows/ci.yml`）。
+
+### ワークフロー
+
+1. **テスト**: コードのリント、フォーマットチェック、ユニットテストの実行
+2. **ビルド**: アプリケーションのビルドと成果物のアップロード
+3. **Dockerビルド**: Dockerイメージのビルドとプッシュ（mainブランチのみ）
+4. **デプロイ**: 本番環境へのデプロイ（mainブランチへのpush時のみ）
+
+### 必要なシークレット
+
+GitHubリポジトリに以下のシークレットを設定してください：
+
+- `DOCKER_USERNAME`: Docker Hubのユーザー名
+- `DOCKER_PASSWORD`: Docker Hubのパスワード
+- `DOCKER_REGISTRY`: DockerレジストリのURL（例: `your-registry.io`）
 
 ## ドキュメント
 

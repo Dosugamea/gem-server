@@ -121,6 +121,7 @@ func main() {
 	router, err := rest.NewRouter(
 		cfg,
 		logger,
+		metrics,
 		authAppService,
 		currencyAppService,
 		paymentAppService,

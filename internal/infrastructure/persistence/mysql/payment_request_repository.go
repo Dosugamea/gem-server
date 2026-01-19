@@ -7,22 +7,43 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	otelcodes "go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
 	"gem-server/internal/domain/currency"
 	"gem-server/internal/domain/payment_request"
 )
 
 // PaymentRequestRepository MySQL実装のPaymentRequestRepository
 type PaymentRequestRepository struct {
-	db *DB
+	db     *DB
+	tracer trace.Tracer
 }
 
 // NewPaymentRequestRepository 新しいPaymentRequestRepositoryを作成
 func NewPaymentRequestRepository(db *DB) *PaymentRequestRepository {
-	return &PaymentRequestRepository{db: db}
+	return &PaymentRequestRepository{
+		db:     db,
+		tracer: otel.Tracer("payment-request-repository"),
+	}
 }
 
 // Save PaymentRequestを保存
 func (r *PaymentRequestRepository) Save(ctx context.Context, pr *payment_request.PaymentRequest) error {
+	ctx, span := r.tracer.Start(ctx, "PaymentRequestRepository.Save")
+	defer span.End()
+
+	span.SetAttributes(
+		attribute.String("db.payment_request_id", pr.PaymentRequestID()),
+		attribute.String("db.user_id", pr.UserID()),
+		attribute.Int64("db.amount", pr.Amount()),
+		attribute.String("db.status", pr.Status().String()),
+		attribute.String("db.operation", "INSERT"),
+		attribute.String("db.table", "payment_requests"),
+	)
+
 	query := `
 		INSERT INTO payment_requests (
 			payment_request_id, user_id, amount, currency, currency_type,
@@ -39,16 +60,22 @@ func (r *PaymentRequestRepository) Save(ctx context.Context, pr *payment_request
 
 	paymentMethodDataJSON, err := json.Marshal(pr.PaymentMethodData())
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(otelcodes.Error, err.Error())
 		return fmt.Errorf("failed to marshal payment_method_data: %w", err)
 	}
 
 	detailsJSON, err := json.Marshal(pr.Details())
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(otelcodes.Error, err.Error())
 		return fmt.Errorf("failed to marshal details: %w", err)
 	}
 
 	responseJSON, err := json.Marshal(pr.Response())
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(otelcodes.Error, err.Error())
 		return fmt.Errorf("failed to marshal response: %w", err)
 	}
 
@@ -67,14 +94,26 @@ func (r *PaymentRequestRepository) Save(ctx context.Context, pr *payment_request
 	)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(otelcodes.Error, err.Error())
 		return fmt.Errorf("failed to save payment request: %w", err)
 	}
 
+	span.SetStatus(otelcodes.Ok, "payment request saved")
 	return nil
 }
 
 // FindByPaymentRequestID PaymentRequest IDでPaymentRequestを取得
 func (r *PaymentRequestRepository) FindByPaymentRequestID(ctx context.Context, paymentRequestID string) (*payment_request.PaymentRequest, error) {
+	ctx, span := r.tracer.Start(ctx, "PaymentRequestRepository.FindByPaymentRequestID")
+	defer span.End()
+
+	span.SetAttributes(
+		attribute.String("db.payment_request_id", paymentRequestID),
+		attribute.String("db.operation", "SELECT"),
+		attribute.String("db.table", "payment_requests"),
+	)
+
 	query := `
 		SELECT 
 			payment_request_id, user_id, amount, currency, currency_type,
@@ -104,11 +143,21 @@ func (r *PaymentRequestRepository) FindByPaymentRequestID(ctx context.Context, p
 	)
 
 	if err == sql.ErrNoRows {
+		span.SetStatus(otelcodes.Ok, "payment request not found")
 		return nil, payment_request.ErrPaymentRequestNotFound
 	}
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(otelcodes.Error, err.Error())
 		return nil, fmt.Errorf("failed to find payment request: %w", err)
 	}
+
+	span.SetAttributes(
+		attribute.String("db.user_id", dbUserID),
+		attribute.Int64("db.amount", amount),
+		attribute.String("db.status", dbStatus),
+	)
+	span.SetStatus(otelcodes.Ok, "payment request found")
 
 	ct, err := currency.NewCurrencyType(dbCurrencyType)
 	if err != nil {

@@ -31,6 +31,7 @@ type Router struct {
 func NewRouter(
 	cfg *config.Config,
 	logger *otelinfra.Logger,
+	metrics *otelinfra.Metrics,
 	authService *authapp.AuthApplicationService,
 	currencyService *currencyapp.CurrencyApplicationService,
 	paymentService *paymentapp.PaymentApplicationService,
@@ -45,7 +46,7 @@ func NewRouter(
 	}
 
 	// ミドルウェアの設定
-	setupMiddleware(e, cfg, logger)
+	setupMiddleware(e, cfg, logger, metrics)
 
 	// ハンドラーの作成
 	authHandler := handler.NewAuthHandler(authService)
@@ -71,7 +72,7 @@ func NewRouter(
 }
 
 // setupMiddleware ミドルウェアを設定
-func setupMiddleware(e *echo.Echo, cfg *config.Config, logger *otelinfra.Logger) {
+func setupMiddleware(e *echo.Echo, cfg *config.Config, logger *otelinfra.Logger, metrics *otelinfra.Metrics) {
 	// リカバリーミドルウェア
 	e.Use(middleware.Recover())
 
@@ -87,6 +88,9 @@ func setupMiddleware(e *echo.Echo, cfg *config.Config, logger *otelinfra.Logger)
 
 	// トレーシングミドルウェア
 	e.Use(restmiddleware.TracingMiddleware())
+
+	// メトリクスミドルウェア
+	e.Use(restmiddleware.MetricsMiddleware(metrics))
 
 	// ログミドルウェア
 	e.Use(restmiddleware.LoggingMiddleware(logger))

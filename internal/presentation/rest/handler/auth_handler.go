@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	authapp "gem-server/internal/application/auth"
+
 	"github.com/labstack/echo/v4"
 )
 

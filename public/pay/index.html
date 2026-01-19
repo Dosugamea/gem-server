@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>決済 - Gem Currency</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .payment-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 480px;
+      width: 100%;
+      padding: 32px;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .header h1 {
+      color: #1a202c;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: #718096;
+      font-size: 14px;
+    }
+
+    .payment-info {
+      background: #f7fafc;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .payment-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .payment-item:last-child {
+      border-bottom: none;
+    }
+
+    .payment-item-label {
+      color: #4a5568;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .payment-item-value {
+      color: #1a202c;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .total-amount {
+      font-size: 24px;
+      color: #2d3748;
+      font-weight: 700;
+    }
+
+    .balance-info {
+      background: #edf2f7;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .balance-label {
+      color: #718096;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .balance-amount {
+      color: #2d3748;
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    .balance-types {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .balance-type {
+      flex: 1;
+      text-align: center;
+    }
+
+    .balance-type-label {
+      color: #718096;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .balance-type-value {
+      color: #2d3748;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .insufficient-balance {
+      background: #fed7d7;
+      border: 1px solid #fc8181;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 24px;
+      color: #c53030;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .error-message {
+      background: #fed7d7;
+      border: 1px solid #fc8181;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 24px;
+      color: #c53030;
+      font-size: 14px;
+      text-align: center;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #718096;
+    }
+
+    .spinner {
+      border: 3px solid #e2e8f0;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 14px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #4a5568;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #cbd5e0;
+    }
+  </style>
+</head>
+<body>
+  <div class="payment-container">
+    <div class="header">
+      <h1>決済確認</h1>
+      <p>Gem Currency 決済アプリ</p>
+    </div>
+
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>決済情報を読み込んでいます...</p>
+    </div>
+
+    <div id="payment-content" style="display: none;">
+      <div class="payment-info">
+        <div class="payment-item">
+          <span class="payment-item-label">商品名</span>
+          <span class="payment-item-value" id="item-name">-</span>
+        </div>
+        <div class="payment-item">
+          <span class="payment-item-label">金額</span>
+          <span class="payment-item-value total-amount" id="total-amount">-</span>
+        </div>
+      </div>
+
+      <div class="balance-info">
+        <div class="balance-label">現在の残高</div>
+        <div class="balance-amount" id="total-balance">読み込み中...</div>
+        <div class="balance-types">
+          <div class="balance-type">
+            <div class="balance-type-label">有償通貨</div>
+            <div class="balance-type-value" id="paid-balance">-</div>
+          </div>
+          <div class="balance-type">
+            <div class="balance-type-label">無料通貨</div>
+            <div class="balance-type-value" id="free-balance">-</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="insufficient-balance" class="insufficient-balance" style="display: none;">
+        残高が不足しています。有償通貨を追加してください。
+      </div>
+
+      <div id="error-message" class="error-message"></div>
+
+      <div class="button-group">
+        <button class="btn btn-secondary" id="cancel-btn">キャンセル</button>
+        <button class="btn btn-primary" id="approve-btn" disabled>決済を承認</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/pay/payment-app.js"></script>
+</body>
+</html>

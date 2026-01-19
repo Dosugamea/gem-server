@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"fmt"
+
 	redemptionapp "gem-server/internal/application/code_redemption"
 	currencyapp "gem-server/internal/application/currency"
 	historyapp "gem-server/internal/application/history"
@@ -98,6 +100,9 @@ func setupRoutes(
 	redemptionHandler *handler.CodeRedemptionHandler,
 	historyHandler *handler.HistoryHandler,
 ) {
+	// Payment Handler関連の静的ファイル配信
+	setupPaymentHandlerRoutes(e)
+
 	// API v1グループ
 	api := e.Group("/api/v1")
 
@@ -121,6 +126,44 @@ func setupRoutes(
 	// ヘルスチェックエンドポイント（認証不要）
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(200, map[string]string{"status": "ok"})
+	})
+}
+
+// setupPaymentHandlerRoutes Payment Handler関連のルーティングを設定
+func setupPaymentHandlerRoutes(e *echo.Echo) {
+	// 静的ファイルの配信（publicディレクトリ）
+	e.Static("/pay", "public/pay")
+
+	// Payment Method Manifestへのリンクを設定
+	e.GET("/pay", func(c echo.Context) error {
+		// リクエストからベースURLを動的に生成
+		scheme := c.Scheme()
+		host := c.Request().Host
+		manifestURL := fmt.Sprintf("%s://%s/pay/payment-manifest.json", scheme, host)
+		
+		// Payment Method ManifestへのリンクをHTTPヘッダーに設定
+		c.Response().Header().Set("Link", fmt.Sprintf(`<%s>; rel="payment-method-manifest"`, manifestURL))
+		// 決済アプリウィンドウのHTMLを返す
+		return c.File("public/pay/index.html")
+	})
+
+	// Payment Method Manifestの配信
+	e.GET("/pay/payment-manifest.json", func(c echo.Context) error {
+		c.Response().Header().Set("Content-Type", "application/manifest+json")
+		return c.File("public/pay/payment-manifest.json")
+	})
+
+	// Web App Manifestの配信
+	e.GET("/pay/manifest.json", func(c echo.Context) error {
+		c.Response().Header().Set("Content-Type", "application/manifest+json")
+		return c.File("public/pay/manifest.json")
+	})
+
+	// Service Workerの配信（適切なContent-Typeを設定）
+	e.GET("/pay/sw-payment-handler.js", func(c echo.Context) error {
+		c.Response().Header().Set("Content-Type", "application/javascript")
+		c.Response().Header().Set("Service-Worker-Allowed", "/pay/")
+		return c.File("public/pay/sw-payment-handler.js")
 	})
 }
 

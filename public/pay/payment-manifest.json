@@ -1,0 +1,6 @@
+{
+  "default_applications": ["/pay/manifest.json"],
+  "supported_origins": [
+    "*"
+  ]
+}

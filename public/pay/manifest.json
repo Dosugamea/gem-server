@@ -1,0 +1,15 @@
+{
+  "name": "Gem Currency Payment",
+  "short_name": "GemPay",
+  "description": "仮想通貨決済アプリ",
+  "icons": [],
+  "serviceworker": {
+    "src": "/pay/sw-payment-handler.js",
+    "use_cache": false,
+    "scope": "/pay/"
+  },
+  "start_url": "/pay/index.html",
+  "display": "standalone",
+  "theme_color": "#4F46E5",
+  "background_color": "#FFFFFF"
+}

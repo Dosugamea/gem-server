@@ -54,13 +54,13 @@ func (cr *CodeRedemption) RedeemedAt() time.Time {
 type RedemptionCodeRepository interface {
 	// FindByCode コードで引き換えコードを取得
 	FindByCode(ctx context.Context, code string) (*RedemptionCode, error)
-	
+
 	// Update 引き換えコードを更新
 	Update(ctx context.Context, code *RedemptionCode) error
-	
+
 	// HasUserRedeemed ユーザーが既にこのコードを引き換え済みかチェック
 	HasUserRedeemed(ctx context.Context, code string, userID string) (bool, error)
-	
+
 	// SaveRedemption 引き換え履歴を保存
 	SaveRedemption(ctx context.Context, redemption *CodeRedemption) error
 }

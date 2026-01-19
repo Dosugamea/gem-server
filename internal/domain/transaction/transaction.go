@@ -7,18 +7,18 @@ import (
 
 // Transaction トランザクションエンティティ
 type Transaction struct {
-	transactionID   string
-	userID          string
-	transactionType TransactionType
-	currencyType    currency.CurrencyType
-	amount          int64 // 整数値（小数点なし）
-	balanceBefore   int64 // 整数値（小数点なし）
-	balanceAfter    int64 // 整数値（小数点なし）
-	status          TransactionStatus
+	transactionID    string
+	userID           string
+	transactionType  TransactionType
+	currencyType     currency.CurrencyType
+	amount           int64 // 整数値（小数点なし）
+	balanceBefore    int64 // 整数値（小数点なし）
+	balanceAfter     int64 // 整数値（小数点なし）
+	status           TransactionStatus
 	paymentRequestID *string // PaymentRequest APIのID（オプション）
-	metadata        map[string]interface{}
-	createdAt       time.Time
-	updatedAt       time.Time
+	metadata         map[string]interface{}
+	createdAt        time.Time
+	updatedAt        time.Time
 }
 
 // NewTransaction 新しいTransactionエンティティを作成
@@ -35,18 +35,18 @@ func NewTransaction(
 ) *Transaction {
 	now := time.Now()
 	return &Transaction{
-		transactionID:   transactionID,
-		userID:          userID,
-		transactionType: transactionType,
-		currencyType:    currencyType,
-		amount:          amount,
-		balanceBefore:   balanceBefore,
-		balanceAfter:    balanceAfter,
-		status:          status,
+		transactionID:    transactionID,
+		userID:           userID,
+		transactionType:  transactionType,
+		currencyType:     currencyType,
+		amount:           amount,
+		balanceBefore:    balanceBefore,
+		balanceAfter:     balanceAfter,
+		status:           status,
 		paymentRequestID: nil,
-		metadata:        metadata,
-		createdAt:       now,
-		updatedAt:       now,
+		metadata:         metadata,
+		createdAt:        now,
+		updatedAt:        now,
 	}
 }
 

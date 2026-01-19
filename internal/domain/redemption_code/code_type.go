@@ -9,8 +9,8 @@ type CodeType string
 
 const (
 	CodeTypePromotion CodeType = "promotion" // プロモーションコード
-	CodeTypeGift     CodeType = "gift"       // ギフトコード
-	CodeTypeEvent    CodeType = "event"      // イベントコード
+	CodeTypeGift      CodeType = "gift"      // ギフトコード
+	CodeTypeEvent     CodeType = "event"     // イベントコード
 )
 
 // NewCodeType 新しいCodeTypeを作成

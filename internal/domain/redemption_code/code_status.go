@@ -10,7 +10,7 @@ type CodeStatus string
 const (
 	CodeStatusActive   CodeStatus = "active"   // 有効
 	CodeStatusExpired  CodeStatus = "expired"  // 期限切れ
-	CodeStatusDisabled CodeStatus = "disabled"  // 無効化
+	CodeStatusDisabled CodeStatus = "disabled" // 無効化
 )
 
 // NewCodeStatus 新しいCodeStatusを作成

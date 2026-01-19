@@ -23,12 +23,12 @@ func (s *CurrencyService) GetTotalBalance(ctx context.Context, userID string) (i
 	if err != nil {
 		return 0, err
 	}
-	
+
 	freeCurrency, err := s.currencyRepo.FindByUserIDAndType(ctx, userID, currency.CurrencyTypeFree)
 	if err != nil {
 		return 0, err
 	}
-	
+
 	return paidCurrency.Balance() + freeCurrency.Balance(), nil
 }
 
@@ -38,22 +38,22 @@ func (s *CurrencyService) HasSufficientBalance(ctx context.Context, userID strin
 	if err != nil {
 		return false, err
 	}
-	
+
 	freeBalance := freeCurrency.Balance()
 	remainingAmount := amount
-	
+
 	// 無料通貨で支払える分を差し引く
 	if freeBalance >= remainingAmount {
 		return true, nil
 	}
-	
+
 	remainingAmount -= freeBalance
-	
+
 	// 不足分を有料通貨で支払えるかチェック
 	paidCurrency, err := s.currencyRepo.FindByUserIDAndType(ctx, userID, currency.CurrencyTypePaid)
 	if err != nil {
 		return false, err
 	}
-	
+
 	return paidCurrency.Balance() >= remainingAmount, nil
 }

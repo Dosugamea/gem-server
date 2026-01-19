@@ -112,22 +112,22 @@ func (rc *RedemptionCode) UpdatedAt() time.Time {
 // IsValid 有効性をチェック（有効期限、使用回数、ステータス）
 func (rc *RedemptionCode) IsValid() bool {
 	now := time.Now()
-	
+
 	// ステータスチェック
 	if !rc.status.IsActive() {
 		return false
 	}
-	
+
 	// 有効期限チェック
 	if now.Before(rc.validFrom) || now.After(rc.validUntil) {
 		return false
 	}
-	
+
 	// 使用回数チェック
 	if rc.maxUses > 0 && rc.currentUses >= rc.maxUses {
 		return false
 	}
-	
+
 	return true
 }
 

@@ -7,17 +7,17 @@ import (
 
 // PaymentRequest PaymentRequestエンティティ
 type PaymentRequest struct {
-	paymentRequestID string
-	userID           string
-	amount           int64 // 整数値（小数点なし）
-	currency         string // 通貨コード（例: "JPY"）
-	currencyType     currency.CurrencyType
-	status           PaymentRequestStatus
+	paymentRequestID  string
+	userID            string
+	amount            int64  // 整数値（小数点なし）
+	currency          string // 通貨コード（例: "JPY"）
+	currencyType      currency.CurrencyType
+	status            PaymentRequestStatus
 	paymentMethodData map[string]interface{} // PaymentRequestのmethodData
-	details          map[string]interface{} // PaymentRequestのdetails
-	response         map[string]interface{} // PaymentResponse
-	createdAt        time.Time
-	updatedAt        time.Time
+	details           map[string]interface{} // PaymentRequestのdetails
+	response          map[string]interface{} // PaymentResponse
+	createdAt         time.Time
+	updatedAt         time.Time
 }
 
 // PaymentRequestStatus PaymentRequestのステータス
@@ -46,16 +46,16 @@ func NewPaymentRequest(
 	now := time.Now()
 	return &PaymentRequest{
 		paymentRequestID:  paymentRequestID,
-		userID:           userID,
-		amount:           amount,
-		currency:         currency,
-		currencyType:     currencyType,
-		status:           PaymentRequestStatusPending,
+		userID:            userID,
+		amount:            amount,
+		currency:          currency,
+		currencyType:      currencyType,
+		status:            PaymentRequestStatusPending,
 		paymentMethodData: make(map[string]interface{}),
-		details:          make(map[string]interface{}),
-		response:         make(map[string]interface{}),
-		createdAt:        now,
-		updatedAt:        now,
+		details:           make(map[string]interface{}),
+		response:          make(map[string]interface{}),
+		createdAt:         now,
+		updatedAt:         now,
 	}
 }
 

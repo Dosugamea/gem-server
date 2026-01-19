@@ -26,18 +26,18 @@ paths:
             type: string
           description: ユーザーID
       responses:
-        '200':
+        "200":
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BalanceResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/BalanceResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /users/{user_id}/grant:
     post:
@@ -59,20 +59,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GrantRequest'
+              $ref: "#/components/schemas/GrantRequest"
       responses:
-        '200':
+        "200":
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GrantResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/GrantResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /users/{user_id}/consume:
     post:
@@ -94,26 +94,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConsumeRequest'
+              $ref: "#/components/schemas/ConsumeRequest"
       responses:
-        '200':
+        "200":
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConsumeResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '409':
+                $ref: "#/components/schemas/ConsumeResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
           description: 残高不足
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /payment/process:
     post:
@@ -128,26 +128,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProcessPaymentRequest'
+              $ref: "#/components/schemas/ProcessPaymentRequest"
       responses:
-        '200':
+        "200":
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProcessPaymentResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '409':
+                $ref: "#/components/schemas/ProcessPaymentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
           description: 残高不足または二重決済
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /codes/redeem:
     post:
@@ -162,30 +162,30 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RedeemCodeRequest'
+              $ref: "#/components/schemas/RedeemCodeRequest"
       responses:
-        '200':
+        "200":
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RedeemCodeResponse'
-        '400':
+                $ref: "#/components/schemas/RedeemCodeResponse"
+        "400":
           description: 無効なコードまたは既に使用済み
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
           description: コードが見つからない
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /users/{user_id}/transactions:
     get:
@@ -230,16 +230,16 @@ paths:
             enum: [grant, consume, refund, expire]
           description: 取引種別フィルタ
       responses:
-        '200':
+        "200":
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionHistoryResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/TransactionHistoryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
 components:
   securitySchemes:
@@ -324,7 +324,7 @@ components:
         consumption_details:
           type: array
           items:
-            $ref: '#/components/schemas/ConsumptionDetail'
+            $ref: "#/components/schemas/ConsumptionDetail"
           description: 優先順位制御使用時
         balance_after:
           type: string
@@ -387,7 +387,7 @@ components:
         consumption_details:
           type: array
           items:
-            $ref: '#/components/schemas/ConsumptionDetail'
+            $ref: "#/components/schemas/ConsumptionDetail"
         total_consumed:
           type: string
           description: 整数値の文字列
@@ -434,7 +434,7 @@ components:
         transactions:
           type: array
           items:
-            $ref: '#/components/schemas/Transaction'
+            $ref: "#/components/schemas/Transaction"
         total:
           type: integer
         limit:
@@ -482,25 +482,25 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
 
     Unauthorized:
       description: 認証エラー
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
 
     NotFound:
       description: リソースが見つからない
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
 
     InternalServerError:
       description: サーバーエラー
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"

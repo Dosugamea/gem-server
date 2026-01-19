@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	otelinfra "gem-server/internal/infrastructure/observability/otel"
+
 	"github.com/labstack/echo/v4"
 
 	"gem-server/internal/domain/currency"

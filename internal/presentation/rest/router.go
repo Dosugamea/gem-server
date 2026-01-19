@@ -9,6 +9,7 @@ import (
 	otelinfra "gem-server/internal/infrastructure/observability/otel"
 	"gem-server/internal/presentation/rest/handler"
 	restmiddleware "gem-server/internal/presentation/rest/middleware"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )

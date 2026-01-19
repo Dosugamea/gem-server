@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	historyapp "gem-server/internal/application/history"
+
 	"github.com/labstack/echo/v4"
 )
 

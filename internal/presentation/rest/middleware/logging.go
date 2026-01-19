@@ -4,6 +4,7 @@ import (
 	"time"
 
 	otelinfra "gem-server/internal/infrastructure/observability/otel"
+
 	"github.com/labstack/echo/v4"
 )
 

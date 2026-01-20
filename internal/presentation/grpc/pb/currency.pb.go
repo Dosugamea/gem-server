@@ -127,6 +127,7 @@ type GrantRequest struct {
 	Amount        string                 `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount,omitempty"`                                 // 整数値の文字列（例: "100"）
 	Reason        string                 `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`
 	Metadata      map[string]string      `protobuf:"bytes,5,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Requester     string                 `protobuf:"bytes,6,opt,name=requester,proto3" json:"requester,omitempty"` // リクエスト元（サービス名やユーザーIDなど）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -194,6 +195,13 @@ func (x *GrantRequest) GetMetadata() map[string]string {
 		return x.Metadata
 	}
 	return nil
+}
+
+func (x *GrantRequest) GetRequester() string {
+	if x != nil {
+		return x.Requester
+	}
+	return ""
 }
 
 // GrantResponse 通貨付与レスポンス
@@ -266,6 +274,7 @@ type ConsumeRequest struct {
 	ItemId        string                 `protobuf:"bytes,4,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
 	UsePriority   bool                   `protobuf:"varint,5,opt,name=use_priority,json=usePriority,proto3" json:"use_priority,omitempty"` // 優先順位制御（無料通貨優先）
 	Metadata      map[string]string      `protobuf:"bytes,6,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Requester     string                 `protobuf:"bytes,7,opt,name=requester,proto3" json:"requester,omitempty"` // リクエスト元（サービス名やユーザーIDなど）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -340,6 +349,13 @@ func (x *ConsumeRequest) GetMetadata() map[string]string {
 		return x.Metadata
 	}
 	return nil
+}
+
+func (x *ConsumeRequest) GetRequester() string {
+	if x != nil {
+		return x.Requester
+	}
+	return ""
 }
 
 // ConsumeResponse 通貨消費レスポンス
@@ -1055,27 +1071,29 @@ const file_currency_proto_rawDesc = "" +
 	"\bbalances\x18\x02 \x03(\v2*.currency.GetBalanceResponse.BalancesEntryR\bbalances\x1a;\n" +
 	"\rBalancesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xfb\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x99\x02\n" +
 	"\fGrantRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12#\n" +
 	"\rcurrency_type\x18\x02 \x01(\tR\fcurrencyType\x12\x16\n" +
 	"\x06amount\x18\x03 \x01(\tR\x06amount\x12\x16\n" +
 	"\x06reason\x18\x04 \x01(\tR\x06reason\x12@\n" +
-	"\bmetadata\x18\x05 \x03(\v2$.currency.GrantRequest.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmetadata\x18\x05 \x03(\v2$.currency.GrantRequest.MetadataEntryR\bmetadata\x12\x1c\n" +
+	"\trequester\x18\x06 \x01(\tR\trequester\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"s\n" +
 	"\rGrantResponse\x12%\n" +
 	"\x0etransaction_id\x18\x01 \x01(\tR\rtransactionId\x12#\n" +
 	"\rbalance_after\x18\x02 \x01(\tR\fbalanceAfter\x12\x16\n" +
-	"\x06status\x18\x03 \x01(\tR\x06status\"\xa3\x02\n" +
+	"\x06status\x18\x03 \x01(\tR\x06status\"\xc1\x02\n" +
 	"\x0eConsumeRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12#\n" +
 	"\rcurrency_type\x18\x02 \x01(\tR\fcurrencyType\x12\x16\n" +
 	"\x06amount\x18\x03 \x01(\tR\x06amount\x12\x17\n" +
 	"\aitem_id\x18\x04 \x01(\tR\x06itemId\x12!\n" +
 	"\fuse_priority\x18\x05 \x01(\bR\vusePriority\x12B\n" +
-	"\bmetadata\x18\x06 \x03(\v2&.currency.ConsumeRequest.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmetadata\x18\x06 \x03(\v2&.currency.ConsumeRequest.MetadataEntryR\bmetadata\x12\x1c\n" +
+	"\trequester\x18\a \x01(\tR\trequester\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xea\x01\n" +

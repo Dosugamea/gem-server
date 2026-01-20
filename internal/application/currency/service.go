@@ -184,7 +184,11 @@ func (s *CurrencyApplicationService) Grant(ctx context.Context, req *GrantReques
 			}
 
 			// トランザクション履歴を記録
-			txn := transaction.NewTransaction(
+			var requesterPtr *string
+			if req.Requester != "" {
+				requesterPtr = &req.Requester
+			}
+			txn := transaction.NewTransactionWithRequester(
 				transactionID,
 				req.UserID,
 				transaction.TransactionTypeGrant,
@@ -193,6 +197,7 @@ func (s *CurrencyApplicationService) Grant(ctx context.Context, req *GrantReques
 				balanceBefore,
 				c.Balance(),
 				transaction.TransactionStatusCompleted,
+				requesterPtr,
 				req.Metadata,
 			)
 
@@ -309,7 +314,11 @@ func (s *CurrencyApplicationService) Consume(ctx context.Context, req *ConsumeRe
 			}
 
 			// トランザクション履歴を記録
-			txn := transaction.NewTransaction(
+			var requesterPtr *string
+			if req.Requester != "" {
+				requesterPtr = &req.Requester
+			}
+			txn := transaction.NewTransactionWithRequester(
 				transactionID,
 				req.UserID,
 				transaction.TransactionTypeConsume,
@@ -318,6 +327,7 @@ func (s *CurrencyApplicationService) Consume(ctx context.Context, req *ConsumeRe
 				balanceBefore,
 				c.Balance(),
 				transaction.TransactionStatusCompleted,
+				requesterPtr,
 				req.Metadata,
 			)
 
@@ -463,7 +473,11 @@ func (s *CurrencyApplicationService) ConsumeWithPriority(ctx context.Context, re
 				remainingAmount -= freeConsumeAmount
 
 				// トランザクション履歴を記録
-				txn := transaction.NewTransaction(
+				var requesterPtr *string
+				if req.Requester != "" {
+					requesterPtr = &req.Requester
+				}
+				txn := transaction.NewTransactionWithRequester(
 					fmt.Sprintf("%s_free", transactionID),
 					req.UserID,
 					transaction.TransactionTypeConsume,
@@ -472,6 +486,7 @@ func (s *CurrencyApplicationService) ConsumeWithPriority(ctx context.Context, re
 					freeBalanceBefore,
 					freeCurrency.Balance(),
 					transaction.TransactionStatusCompleted,
+					requesterPtr,
 					req.Metadata,
 				)
 				if err := s.transactionRepo.Save(ctx, txn); err != nil {
@@ -534,7 +549,11 @@ func (s *CurrencyApplicationService) ConsumeWithPriority(ctx context.Context, re
 				totalConsumed += remainingAmount
 
 				// トランザクション履歴を記録
-				txn := transaction.NewTransaction(
+				var requesterPtr *string
+				if req.Requester != "" {
+					requesterPtr = &req.Requester
+				}
+				txn := transaction.NewTransactionWithRequester(
 					fmt.Sprintf("%s_paid", transactionID),
 					req.UserID,
 					transaction.TransactionTypeConsume,
@@ -543,6 +562,7 @@ func (s *CurrencyApplicationService) ConsumeWithPriority(ctx context.Context, re
 					paidBalanceBefore,
 					paidCurrency.Balance(),
 					transaction.TransactionStatusCompleted,
+					requesterPtr,
 					req.Metadata,
 				)
 				if err := s.transactionRepo.Save(ctx, txn); err != nil {

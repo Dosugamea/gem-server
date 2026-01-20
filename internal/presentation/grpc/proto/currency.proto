@@ -43,6 +43,7 @@ message GrantRequest {
   string amount = 3; // 整数値の文字列（例: "100"）
   string reason = 4;
   map<string, string> metadata = 5;
+  string requester = 6; // リクエスト元（サービス名やユーザーIDなど）
 }
 
 // GrantResponse 通貨付与レスポンス
@@ -60,6 +61,7 @@ message ConsumeRequest {
   string item_id = 4;
   bool use_priority = 5; // 優先順位制御（無料通貨優先）
   map<string, string> metadata = 6;
+  string requester = 7; // リクエスト元（サービス名やユーザーIDなど）
 }
 
 // ConsumeResponse 通貨消費レスポンス

@@ -29,6 +29,7 @@ type GrantRequest struct {
 	CurrencyType string                 `json:"currency_type" example:"free" enums:"paid,free"`
 	Amount       string                 `json:"amount" example:"100"`
 	Reason       string                 `json:"reason" example:"イベント報酬"`
+	Requester    string                 `json:"requester" example:"game-server-01"`
 	Metadata     map[string]interface{} `json:"metadata"`
 }
 
@@ -47,6 +48,7 @@ type ConsumeRequest struct {
 	Amount       string                 `json:"amount" example:"50"`
 	ItemID       string                 `json:"item_id" example:"item001"`
 	UsePriority  bool                   `json:"use_priority" example:"false"`
+	Requester    string                 `json:"requester" example:"game-server-01"`
 	Metadata     map[string]interface{} `json:"metadata"`
 }
 
@@ -176,6 +178,7 @@ func (h *CurrencyHandler) GrantCurrency(c echo.Context) error {
 		CurrencyType string                 `json:"currency_type"`
 		Amount       string                 `json:"amount"`
 		Reason       string                 `json:"reason"`
+		Requester    string                 `json:"requester"`
 		Metadata     map[string]interface{} `json:"metadata"`
 	}
 
@@ -194,6 +197,7 @@ func (h *CurrencyHandler) GrantCurrency(c echo.Context) error {
 		CurrencyType: reqBody.CurrencyType,
 		Amount:       amount,
 		Reason:       reqBody.Reason,
+		Requester:    reqBody.Requester,
 		Metadata:     reqBody.Metadata,
 	}
 
@@ -234,6 +238,7 @@ func (h *CurrencyHandler) ConsumeCurrency(c echo.Context) error {
 		Amount       string                 `json:"amount"`
 		ItemID       string                 `json:"item_id"`
 		UsePriority  bool                   `json:"use_priority"`
+		Requester    string                 `json:"requester"`
 		Metadata     map[string]interface{} `json:"metadata"`
 	}
 
@@ -253,6 +258,7 @@ func (h *CurrencyHandler) ConsumeCurrency(c echo.Context) error {
 		Amount:       amount,
 		ItemID:       reqBody.ItemID,
 		UsePriority:  reqBody.UsePriority,
+		Requester:    reqBody.Requester,
 		Metadata:     reqBody.Metadata,
 	}
 

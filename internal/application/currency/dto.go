@@ -17,6 +17,7 @@ type GrantRequest struct {
 	CurrencyType string // "paid" or "free"
 	Amount       int64
 	Reason       string
+	Requester    string // リクエスト元（サービス名やユーザーIDなど）
 	Metadata     map[string]interface{}
 }
 
@@ -34,6 +35,7 @@ type ConsumeRequest struct {
 	Amount       int64
 	ItemID       string
 	UsePriority  bool // 優先順位制御（無料通貨優先）
+	Requester    string // リクエスト元（サービス名やユーザーIDなど）
 	Metadata     map[string]interface{}
 }
 

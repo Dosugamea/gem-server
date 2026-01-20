@@ -55,10 +55,11 @@ func TestTransactionRepository_Save(t *testing.T) {
 						int64(0),
 						int64(1000),
 						"completed",
-						sqlmock.AnyArg(),
-						sqlmock.AnyArg(),
-						sqlmock.AnyArg(),
-						sqlmock.AnyArg(),
+						sqlmock.AnyArg(), // payment_request_id
+						sqlmock.AnyArg(), // requester
+						sqlmock.AnyArg(), // metadata
+						sqlmock.AnyArg(), // created_at
+						sqlmock.AnyArg(), // updated_at
 					).
 					WillReturnResult(sqlmock.NewResult(1, 1))
 			},
@@ -94,9 +95,10 @@ func TestTransactionRepository_Save(t *testing.T) {
 						int64(500),
 						"completed",
 						"pr123",
-						sqlmock.AnyArg(),
-						sqlmock.AnyArg(),
-						sqlmock.AnyArg(),
+						sqlmock.AnyArg(), // requester
+						sqlmock.AnyArg(), // metadata
+						sqlmock.AnyArg(), // created_at
+						sqlmock.AnyArg(), // updated_at
 					).
 					WillReturnResult(sqlmock.NewResult(1, 1))
 			},
@@ -165,9 +167,9 @@ func TestTransactionRepository_FindByTransactionID(t *testing.T) {
 				rows := sqlmock.NewRows([]string{
 					"transaction_id", "user_id", "transaction_type", "currency_type",
 					"amount", "balance_before", "balance_after", "status",
-					"payment_request_id", "metadata", "created_at", "updated_at",
+					"payment_request_id", "requester", "metadata", "created_at", "updated_at",
 				}).
-					AddRow("txn123", "user123", "grant", "paid", 1000, 0, 1000, "completed", nil, nil, time.Now(), time.Now())
+					AddRow("txn123", "user123", "grant", "paid", 1000, 0, 1000, "completed", nil, nil, nil, time.Now(), time.Now())
 				mock.ExpectQuery(`SELECT`).
 					WithArgs("txn123").
 					WillReturnRows(rows)
@@ -250,10 +252,10 @@ func TestTransactionRepository_FindByUserID(t *testing.T) {
 				rows := sqlmock.NewRows([]string{
 					"transaction_id", "user_id", "transaction_type", "currency_type",
 					"amount", "balance_before", "balance_after", "status",
-					"payment_request_id", "metadata", "created_at", "updated_at",
+					"payment_request_id", "requester", "metadata", "created_at", "updated_at",
 				}).
-					AddRow("txn1", "user123", "grant", "paid", 1000, 0, 1000, "completed", nil, nil, time.Now(), time.Now()).
-					AddRow("txn2", "user123", "consume", "paid", 500, 1000, 500, "completed", nil, nil, time.Now(), time.Now())
+					AddRow("txn1", "user123", "grant", "paid", 1000, 0, 1000, "completed", nil, nil, nil, time.Now(), time.Now()).
+					AddRow("txn2", "user123", "consume", "paid", 500, 1000, 500, "completed", nil, nil, nil, time.Now(), time.Now())
 				mock.ExpectQuery(`SELECT`).
 					WithArgs("user123", 10, 0).
 					WillReturnRows(rows)
@@ -270,7 +272,7 @@ func TestTransactionRepository_FindByUserID(t *testing.T) {
 				rows := sqlmock.NewRows([]string{
 					"transaction_id", "user_id", "transaction_type", "currency_type",
 					"amount", "balance_before", "balance_after", "status",
-					"payment_request_id", "metadata", "created_at", "updated_at",
+					"payment_request_id", "requester", "metadata", "created_at", "updated_at",
 				})
 				mock.ExpectQuery(`SELECT`).
 					WithArgs("user123", 10, 0).
@@ -352,9 +354,9 @@ func TestTransactionRepository_FindByPaymentRequestID(t *testing.T) {
 				rows := sqlmock.NewRows([]string{
 					"transaction_id", "user_id", "transaction_type", "currency_type",
 					"amount", "balance_before", "balance_after", "status",
-					"payment_request_id", "metadata", "created_at", "updated_at",
+					"payment_request_id", "requester", "metadata", "created_at", "updated_at",
 				}).
-					AddRow("txn123", "user123", "consume", "paid", 500, 1000, 500, "completed", "pr123", nil, time.Now(), time.Now())
+					AddRow("txn123", "user123", "consume", "paid", 500, 1000, 500, "completed", "pr123", nil, nil, time.Now(), time.Now())
 				mock.ExpectQuery(`SELECT`).
 					WithArgs("pr123").
 					WillReturnRows(rows)

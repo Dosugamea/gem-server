@@ -16,6 +16,7 @@ type Transaction struct {
 	balanceAfter     int64 // 整数値（小数点なし）
 	status           TransactionStatus
 	paymentRequestID *string // PaymentRequest APIのID（オプション）
+	requester        *string // リクエスト元（サービス名やユーザーIDなど）
 	metadata         map[string]interface{}
 	createdAt        time.Time
 	updatedAt        time.Time
@@ -33,6 +34,33 @@ func NewTransaction(
 	status TransactionStatus,
 	metadata map[string]interface{},
 ) *Transaction {
+	return NewTransactionWithRequester(
+		transactionID,
+		userID,
+		transactionType,
+		currencyType,
+		amount,
+		balanceBefore,
+		balanceAfter,
+		status,
+		nil,
+		metadata,
+	)
+}
+
+// NewTransactionWithRequester 新しいTransactionエンティティを作成（requester指定あり）
+func NewTransactionWithRequester(
+	transactionID string,
+	userID string,
+	transactionType TransactionType,
+	currencyType currency.CurrencyType,
+	amount int64,
+	balanceBefore int64,
+	balanceAfter int64,
+	status TransactionStatus,
+	requester *string,
+	metadata map[string]interface{},
+) *Transaction {
 	now := time.Now()
 	return &Transaction{
 		transactionID:    transactionID,
@@ -44,6 +72,7 @@ func NewTransaction(
 		balanceAfter:     balanceAfter,
 		status:           status,
 		paymentRequestID: nil,
+		requester:        requester,
 		metadata:         metadata,
 		createdAt:        now,
 		updatedAt:        now,
@@ -113,6 +142,17 @@ func (t *Transaction) UpdatedAt() time.Time {
 // SetPaymentRequestID PaymentRequest IDを設定
 func (t *Transaction) SetPaymentRequestID(id string) {
 	t.paymentRequestID = &id
+	t.updatedAt = time.Now()
+}
+
+// Requester リクエスト元を返す
+func (t *Transaction) Requester() *string {
+	return t.requester
+}
+
+// SetRequester リクエスト元を設定
+func (t *Transaction) SetRequester(requester string) {
+	t.requester = &requester
 	t.updatedAt = time.Now()
 }
 

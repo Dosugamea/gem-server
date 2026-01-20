@@ -182,3 +182,50 @@ func TestTransaction_GetterMethods(t *testing.T) {
 	assert.WithinDuration(t, time.Now(), tx.CreatedAt(), time.Second)
 	assert.WithinDuration(t, time.Now(), tx.UpdatedAt(), time.Second)
 }
+
+func TestNewTransactionWithRequester(t *testing.T) {
+	metadata := map[string]interface{}{
+		"reason": "test",
+	}
+	requester := "game-server-01"
+
+	tx := NewTransactionWithRequester(
+		"tx123",
+		"user123",
+		TransactionTypeGrant,
+		currency.CurrencyTypePaid,
+		1000,
+		0,
+		1000,
+		TransactionStatusCompleted,
+		&requester,
+		metadata,
+	)
+
+	assert.Equal(t, "tx123", tx.TransactionID())
+	assert.Equal(t, "user123", tx.UserID())
+	assert.NotNil(t, tx.Requester())
+	assert.Equal(t, requester, *tx.Requester())
+}
+
+func TestTransaction_SetRequester(t *testing.T) {
+	tx := NewTransaction(
+		"tx123",
+		"user123",
+		TransactionTypeConsume,
+		currency.CurrencyTypePaid,
+		1000,
+		5000,
+		4000,
+		TransactionStatusCompleted,
+		nil,
+	)
+
+	assert.Nil(t, tx.Requester())
+
+	requester := "game-server-01"
+	tx.SetRequester(requester)
+
+	assert.NotNil(t, tx.Requester())
+	assert.Equal(t, requester, *tx.Requester())
+}

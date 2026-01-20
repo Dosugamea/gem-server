@@ -98,6 +98,7 @@ func (h *CurrencyHandler) Grant(ctx context.Context, req *pb.GrantRequest) (*pb.
 		CurrencyType: req.CurrencyType,
 		Amount:       amount,
 		Reason:       req.Reason,
+		Requester:    req.Requester,
 		Metadata:     metadata,
 	}
 
@@ -143,6 +144,7 @@ func (h *CurrencyHandler) Consume(ctx context.Context, req *pb.ConsumeRequest) (
 		Amount:       amount,
 		ItemID:       req.ItemId,
 		UsePriority:  req.UsePriority,
+		Requester:    req.Requester,
 		Metadata:     metadata,
 	}
 

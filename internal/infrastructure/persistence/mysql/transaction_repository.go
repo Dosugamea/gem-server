@@ -50,8 +50,8 @@ func (r *TransactionRepository) Save(ctx context.Context, t *transaction.Transac
 		INSERT INTO transactions (
 			transaction_id, user_id, transaction_type, currency_type,
 			amount, balance_before, balance_after, status,
-			payment_request_id, metadata, created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			payment_request_id, requester, metadata, created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON DUPLICATE KEY UPDATE
 			status = VALUES(status),
 			updated_at = VALUES(updated_at)
@@ -74,6 +74,12 @@ func (r *TransactionRepository) Save(ctx context.Context, t *transaction.Transac
 		paymentRequestIDValue = *paymentRequestID
 	}
 
+	requester := t.Requester()
+	var requesterValue interface{}
+	if requester != nil {
+		requesterValue = *requester
+	}
+
 	_, err = r.db.ExecContext(ctx, query,
 		t.TransactionID(),
 		t.UserID(),
@@ -84,6 +90,7 @@ func (r *TransactionRepository) Save(ctx context.Context, t *transaction.Transac
 		t.BalanceAfter(),
 		t.Status().String(),
 		paymentRequestIDValue,
+		requesterValue,
 		string(metadataJSON),
 		t.CreatedAt(),
 		t.UpdatedAt(),
@@ -114,7 +121,7 @@ func (r *TransactionRepository) FindByTransactionID(ctx context.Context, transac
 		SELECT 
 			transaction_id, user_id, transaction_type, currency_type,
 			amount, balance_before, balance_after, status,
-			payment_request_id, metadata, created_at, updated_at
+			payment_request_id, requester, metadata, created_at, updated_at
 		FROM transactions
 		WHERE transaction_id = ?
 	`
@@ -123,6 +130,7 @@ func (r *TransactionRepository) FindByTransactionID(ctx context.Context, transac
 	var amount, balanceBefore, balanceAfter int64
 	var dbStatus string
 	var paymentRequestID sql.NullString
+	var requester sql.NullString
 	var metadataJSON sql.NullString
 	var createdAt, updatedAt time.Time
 
@@ -136,6 +144,7 @@ func (r *TransactionRepository) FindByTransactionID(ctx context.Context, transac
 		&balanceAfter,
 		&dbStatus,
 		&paymentRequestID,
+		&requester,
 		&metadataJSON,
 		&createdAt,
 		&updatedAt,
@@ -180,7 +189,12 @@ func (r *TransactionRepository) FindByTransactionID(ctx context.Context, transac
 		}
 	}
 
-	t := transaction.NewTransaction(
+	var requesterPtr *string
+	if requester.Valid {
+		requesterPtr = &requester.String
+	}
+
+	t := transaction.NewTransactionWithRequester(
 		dbTransactionID,
 		dbUserID,
 		tt,
@@ -189,6 +203,7 @@ func (r *TransactionRepository) FindByTransactionID(ctx context.Context, transac
 		balanceBefore,
 		balanceAfter,
 		ts,
+		requesterPtr,
 		metadata,
 	)
 
@@ -216,7 +231,7 @@ func (r *TransactionRepository) FindByUserID(ctx context.Context, userID string,
 		SELECT 
 			transaction_id, user_id, transaction_type, currency_type,
 			amount, balance_before, balance_after, status,
-			payment_request_id, metadata, created_at, updated_at
+			payment_request_id, requester, metadata, created_at, updated_at
 		FROM transactions
 		WHERE user_id = ?
 		ORDER BY created_at DESC
@@ -237,6 +252,7 @@ func (r *TransactionRepository) FindByUserID(ctx context.Context, userID string,
 		var amount, balanceBefore, balanceAfter int64
 		var dbStatus string
 		var paymentRequestID sql.NullString
+		var requester sql.NullString
 		var metadataJSON sql.NullString
 		var createdAt, updatedAt time.Time
 
@@ -250,6 +266,7 @@ func (r *TransactionRepository) FindByUserID(ctx context.Context, userID string,
 			&balanceAfter,
 			&dbStatus,
 			&paymentRequestID,
+			&requester,
 			&metadataJSON,
 			&createdAt,
 			&updatedAt,
@@ -279,7 +296,12 @@ func (r *TransactionRepository) FindByUserID(ctx context.Context, userID string,
 			}
 		}
 
-		t := transaction.NewTransaction(
+		var requesterPtr *string
+		if requester.Valid {
+			requesterPtr = &requester.String
+		}
+
+		t := transaction.NewTransactionWithRequester(
 			dbTransactionID,
 			dbUserID,
 			tt,
@@ -288,6 +310,7 @@ func (r *TransactionRepository) FindByUserID(ctx context.Context, userID string,
 			balanceBefore,
 			balanceAfter,
 			ts,
+			requesterPtr,
 			metadata,
 		)
 
@@ -324,7 +347,7 @@ func (r *TransactionRepository) FindByPaymentRequestID(ctx context.Context, paym
 		SELECT 
 			transaction_id, user_id, transaction_type, currency_type,
 			amount, balance_before, balance_after, status,
-			payment_request_id, metadata, created_at, updated_at
+			payment_request_id, requester, metadata, created_at, updated_at
 		FROM transactions
 		WHERE payment_request_id = ?
 		ORDER BY created_at DESC
@@ -335,6 +358,7 @@ func (r *TransactionRepository) FindByPaymentRequestID(ctx context.Context, paym
 	var amount, balanceBefore, balanceAfter int64
 	var dbStatus string
 	var paymentRequestIDValue sql.NullString
+	var requester sql.NullString
 	var metadataJSON sql.NullString
 	var createdAt, updatedAt time.Time
 
@@ -348,6 +372,7 @@ func (r *TransactionRepository) FindByPaymentRequestID(ctx context.Context, paym
 		&balanceAfter,
 		&dbStatus,
 		&paymentRequestIDValue,
+		&requester,
 		&metadataJSON,
 		&createdAt,
 		&updatedAt,
@@ -400,7 +425,12 @@ func (r *TransactionRepository) FindByPaymentRequestID(ctx context.Context, paym
 		}
 	}
 
-	t := transaction.NewTransaction(
+	var requesterPtr *string
+	if requester.Valid {
+		requesterPtr = &requester.String
+	}
+
+	t := transaction.NewTransactionWithRequester(
 		dbTransactionID,
 		dbUserID,
 		tt,
@@ -409,6 +439,7 @@ func (r *TransactionRepository) FindByPaymentRequestID(ctx context.Context, paym
 		balanceBefore,
 		balanceAfter,
 		ts,
+		requesterPtr,
 		metadata,
 	)
 

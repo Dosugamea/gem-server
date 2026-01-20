@@ -34,8 +34,7 @@ func TestCodeRedemptionHandler_RedeemCode(t *testing.T) {
 			name:        "正常系: コード引き換え成功",
 			tokenUserID: "user123",
 			requestBody: map[string]interface{}{
-				"code":    "TESTCODE123",
-				"user_id": "user123",
+				"code": "TESTCODE123",
 			},
 			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtx *MockTransactionManager) {
 				// コードを取得
@@ -81,30 +80,28 @@ func TestCodeRedemptionHandler_RedeemCode(t *testing.T) {
 			},
 		},
 		{
+			name:        "異常系: user_idがトークンにない",
+			tokenUserID: "",
+			requestBody: map[string]interface{}{"code": "TESTCODE123"},
+			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtx *MockTransactionManager) {
+			},
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
 			name:        "異常系: 無効なリクエストボディ",
 			tokenUserID: "user123",
 			requestBody: nil,
 			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtx *MockTransactionManager) {
+				// リクエストボディが無効な場合、Bindが失敗してBadRequestが返される
+				// モックは呼ばれない
 			},
-			expectedStatus: http.StatusForbidden, // c.Bindが失敗するとreqBody.UserIDが空になり、user_id mismatchが発生
-		},
-		{
-			name:        "異常系: user_id不一致",
-			tokenUserID: "user456",
-			requestBody: map[string]interface{}{
-				"code":    "TESTCODE123",
-				"user_id": "user123",
-			},
-			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtx *MockTransactionManager) {
-			},
-			expectedStatus: http.StatusForbidden,
+			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name:        "異常系: コードが見つからない",
 			tokenUserID: "user123",
 			requestBody: map[string]interface{}{
-				"code":    "INVALIDCODE",
-				"user_id": "user123",
+				"code": "INVALIDCODE",
 			},
 			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtx *MockTransactionManager) {
 				mrcr.On("FindByCode", mock.Anything, "INVALIDCODE").Return(nil, redemption_code.ErrCodeNotFound)
@@ -115,8 +112,7 @@ func TestCodeRedemptionHandler_RedeemCode(t *testing.T) {
 			name:        "異常系: ユーザーが既に引き換え済み",
 			tokenUserID: "user123",
 			requestBody: map[string]interface{}{
-				"code":    "TESTCODE123",
-				"user_id": "user123",
+				"code": "TESTCODE123",
 			},
 			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtx *MockTransactionManager) {
 				code := redemption_code.NewRedemptionCode(
@@ -138,8 +134,7 @@ func TestCodeRedemptionHandler_RedeemCode(t *testing.T) {
 			name:        "異常系: コードが無効",
 			tokenUserID: "user123",
 			requestBody: map[string]interface{}{
-				"code":    "EXPIREDCODE",
-				"user_id": "user123",
+				"code": "EXPIREDCODE",
 			},
 			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtx *MockTransactionManager) {
 				// 期限切れのコード
@@ -190,6 +185,9 @@ func TestCodeRedemptionHandler_RedeemCode(t *testing.T) {
 			var body []byte
 			if tt.requestBody != nil {
 				body, _ = json.Marshal(tt.requestBody)
+			} else {
+				// nilの場合は無効なJSONを送る
+				body = []byte("invalid json")
 			}
 			req := httptest.NewRequest(http.MethodPost, "/api/v1/codes/redeem", bytes.NewReader(body))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)

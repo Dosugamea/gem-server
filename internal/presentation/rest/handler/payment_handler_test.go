@@ -24,29 +24,22 @@ func TestPaymentHandler_ProcessPayment(t *testing.T) {
 		expectedStatus int
 	}{
 		{
+			name:           "異常系: user_idがトークンにない",
+			tokenUserID:    "",
+			requestBody:    map[string]interface{}{},
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
 			name:           "異常系: 無効なリクエストボディ",
 			tokenUserID:    "user123",
 			requestBody:    nil,
-			expectedStatus: http.StatusForbidden, // c.Bindが失敗するとreqBody.UserIDが空になり、user_id mismatchが発生
-		},
-		{
-			name:        "異常系: user_id不一致",
-			tokenUserID: "user456",
-			requestBody: map[string]interface{}{
-				"payment_request_id": "pr123",
-				"user_id":            "user123",
-				"method_name":        "test",
-				"amount":             "1000",
-				"currency":           "JPY",
-			},
-			expectedStatus: http.StatusForbidden,
+			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name:        "異常系: 無効な金額フォーマット",
 			tokenUserID: "user123",
 			requestBody: map[string]interface{}{
 				"payment_request_id": "pr123",
-				"user_id":            "user123",
 				"method_name":        "test",
 				"amount":             "invalid",
 				"currency":           "JPY",

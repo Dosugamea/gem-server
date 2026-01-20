@@ -43,28 +43,21 @@ func NewAuthHandler(authService *authapp.AuthApplicationService) *AuthHandler {
 // GenerateToken トークン生成ハンドラー
 // @Summary 認証トークンを生成
 // @Description ユーザーIDを元にJWT認証トークンを生成します
-// @Tags auth
+// @Tags admin
 // @Accept json
 // @Produce json
-// @Param request body GenerateTokenRequest true "トークン生成リクエスト"
+// @Param user_id path string true "ユーザーID"
 // @Success 200 {object} GenerateTokenResponse "トークン生成成功"
 // @Failure 400 {object} ErrorResponse "不正なリクエスト"
-// @Router /auth/token [post]
+// @Router /admin/users/{user_id}/issue_token [post]
 func (h *AuthHandler) GenerateToken(c echo.Context) error {
-	var reqBody struct {
-		UserID string `json:"user_id"`
-	}
-
-	if err := c.Bind(&reqBody); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
-	}
-
-	if reqBody.UserID == "" {
+	userID := c.Param("user_id")
+	if userID == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "user_id is required")
 	}
 
 	req := &authapp.GenerateTokenRequest{
-		UserID: reqBody.UserID,
+		UserID: userID,
 	}
 
 	resp, err := h.authService.GenerateToken(c.Request().Context(), req)

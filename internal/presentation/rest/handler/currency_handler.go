@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	currencyapp "gem-server/internal/application/currency"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -80,28 +81,22 @@ func NewCurrencyHandler(currencyService *currencyapp.CurrencyApplicationService)
 	}
 }
 
-// GetBalance 残高取得ハンドラー
+// GetBalance 残高取得ハンドラー（ユーザーAPI用）
 // @Summary 残高を取得
-// @Description 指定されたユーザーの通貨残高を取得します
+// @Description 自分の通貨残高を取得します
 // @Tags currency
 // @Accept json
 // @Produce json
 // @Security Bearer
-// @Param user_id path string true "ユーザーID" example(user123)
 // @Success 200 {object} BalanceResponse "残高取得成功"
 // @Failure 400 {object} ErrorResponse "不正なリクエスト"
 // @Failure 403 {object} ErrorResponse "認証エラー"
-// @Router /users/{user_id}/balance [get]
+// @Router /me/balance [get]
 func (h *CurrencyHandler) GetBalance(c echo.Context) error {
-	userID := c.Param("user_id")
-	if userID == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "user_id is required")
-	}
-
-	// パスパラメータのuser_idとトークンのuser_idが一致するか確認（認証ミドルウェアで設定）
-	tokenUserID, ok := c.Get("user_id").(string)
-	if !ok || tokenUserID != userID {
-		return echo.NewHTTPError(http.StatusForbidden, "user_id mismatch")
+	// トークンからuser_idを取得
+	userID, ok := c.Get("user_id").(string)
+	if !ok || userID == "" {
+		return echo.NewHTTPError(http.StatusUnauthorized, "user_id not found in token")
 	}
 
 	req := &currencyapp.GetBalanceRequest{
@@ -122,29 +117,59 @@ func (h *CurrencyHandler) GetBalance(c echo.Context) error {
 	})
 }
 
-// GrantCurrency 通貨付与ハンドラー
-// @Summary 通貨を付与
-// @Description 指定されたユーザーに無償通貨を付与します
-// @Tags currency
+// GetBalanceAdmin 残高取得ハンドラー（管理API用）
+// @Summary 残高を取得（管理API）
+// @Description 指定されたユーザーの通貨残高を取得します
+// @Tags admin
 // @Accept json
 // @Produce json
-// @Security Bearer
 // @Param user_id path string true "ユーザーID" example(user123)
-// @Param request body GrantRequest true "通貨付与リクエスト"
-// @Success 200 {object} GrantResponse "通貨付与成功"
+// @Param X-API-Key header string true "APIキー"
+// @Success 200 {object} BalanceResponse "残高取得成功"
 // @Failure 400 {object} ErrorResponse "不正なリクエスト"
-// @Failure 403 {object} ErrorResponse "認証エラー"
-// @Router /users/{user_id}/grant [post]
-func (h *CurrencyHandler) GrantCurrency(c echo.Context) error {
+// @Failure 401 {object} ErrorResponse "認証エラー"
+// @Router /admin/users/{user_id}/balance [get]
+func (h *CurrencyHandler) GetBalanceAdmin(c echo.Context) error {
 	userID := c.Param("user_id")
 	if userID == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "user_id is required")
 	}
 
-	// パスパラメータのuser_idとトークンのuser_idが一致するか確認
-	tokenUserID, ok := c.Get("user_id").(string)
-	if !ok || tokenUserID != userID {
-		return echo.NewHTTPError(http.StatusForbidden, "user_id mismatch")
+	req := &currencyapp.GetBalanceRequest{
+		UserID: userID,
+	}
+
+	resp, err := h.currencyService.GetBalance(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, BalanceResponse{
+		UserID: resp.UserID,
+		Balances: BalanceItem{
+			Paid: strconv.FormatInt(resp.Balances["paid"], 10),
+			Free: strconv.FormatInt(resp.Balances["free"], 10),
+		},
+	})
+}
+
+// GrantCurrency 通貨付与ハンドラー（管理API用）
+// @Summary 通貨を付与（管理API）
+// @Description 指定されたユーザーに無償通貨を付与します
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Param user_id path string true "ユーザーID" example(user123)
+// @Param X-API-Key header string true "APIキー"
+// @Param request body GrantRequest true "通貨付与リクエスト"
+// @Success 200 {object} GrantResponse "通貨付与成功"
+// @Failure 400 {object} ErrorResponse "不正なリクエスト"
+// @Failure 401 {object} ErrorResponse "認証エラー"
+// @Router /admin/users/{user_id}/grant [post]
+func (h *CurrencyHandler) GrantCurrency(c echo.Context) error {
+	userID := c.Param("user_id")
+	if userID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "user_id is required")
 	}
 
 	var reqBody struct {
@@ -184,30 +209,24 @@ func (h *CurrencyHandler) GrantCurrency(c echo.Context) error {
 	})
 }
 
-// ConsumeCurrency 通貨消費ハンドラー
-// @Summary 通貨を消費
+// ConsumeCurrency 通貨消費ハンドラー（管理API用）
+// @Summary 通貨を消費（管理API）
 // @Description 指定されたユーザーの通貨を消費します。優先順位制御も可能です
-// @Tags currency
+// @Tags admin
 // @Accept json
 // @Produce json
-// @Security Bearer
 // @Param user_id path string true "ユーザーID" example(user123)
+// @Param X-API-Key header string true "APIキー"
 // @Param request body ConsumeRequest true "通貨消費リクエスト"
 // @Success 200 {object} ConsumeResponse "通貨消費成功"
 // @Failure 400 {object} ErrorResponse "不正なリクエスト"
-// @Failure 403 {object} ErrorResponse "認証エラー"
+// @Failure 401 {object} ErrorResponse "認証エラー"
 // @Failure 409 {object} ErrorResponse "残高不足"
-// @Router /users/{user_id}/consume [post]
+// @Router /admin/users/{user_id}/consume [post]
 func (h *CurrencyHandler) ConsumeCurrency(c echo.Context) error {
 	userID := c.Param("user_id")
 	if userID == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "user_id is required")
-	}
-
-	// パスパラメータのuser_idとトークンのuser_idが一致するか確認
-	tokenUserID, ok := c.Get("user_id").(string)
-	if !ok || tokenUserID != userID {
-		return echo.NewHTTPError(http.StatusForbidden, "user_id mismatch")
 	}
 
 	var reqBody struct {

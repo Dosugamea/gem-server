@@ -79,14 +79,8 @@ function displayPaymentInfo(data) {
 // ユーザー残高の取得
 async function loadUserBalance() {
   try {
-    // ユーザーIDをトークンから取得（実装に応じて変更）
-    const userId = getUserIdFromToken(authToken);
-    if (!userId) {
-      throw new Error('ユーザーIDを取得できませんでした');
-    }
-    
-    // バックエンドAPIから残高を取得
-    const response = await fetch(`${API_BASE_URL}/users/${userId}/balance`, {
+    // バックエンドAPIから残高を取得（ユーザーAPI: /me/balance）
+    const response = await fetch(`${API_BASE_URL}/me/balance`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${authToken}`,

@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -161,6 +160,10 @@ func setupTestRouter(t *testing.T) (*Router, *MockCurrencyRepository, *MockTrans
 			Expiration: 24 * time.Hour,
 			Issuer:     "test-issuer",
 		},
+		AdminAPI: config.AdminAPIConfig{
+			Enabled: true,
+			APIKey:  "test-admin-api-key",
+		},
 	}
 
 	tracer := noop.NewTracerProvider().Tracer("test")
@@ -256,32 +259,43 @@ func TestRouter_AuthTokenEndpoint(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		requestBody    map[string]interface{}
+		path           string
+		apiKey         string
 		expectedStatus int
 	}{
 		{
-			name: "正常系: トークン生成成功",
-			requestBody: map[string]interface{}{
-				"user_id": "user123",
-			},
+			name:           "正常系: トークン生成成功",
+			path:           "/api/v1/admin/users/user123/issue_token",
+			apiKey:         "test-admin-api-key",
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name:           "異常系: リクエストボディが空",
-			requestBody:    nil,
+			name:           "異常系: APIキーなし",
+			path:           "/api/v1/admin/users/user123/issue_token",
+			apiKey:         "",
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name:           "異常系: 無効なAPIキー",
+			path:           "/api/v1/admin/users/user123/issue_token",
+			apiKey:         "invalid-api-key",
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name:           "異常系: user_idが空",
+			path:           "/api/v1/admin/users//issue_token",
+			apiKey:         "test-admin-api-key",
 			expectedStatus: http.StatusBadRequest,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var body []byte
-			if tt.requestBody != nil {
-				body, _ = json.Marshal(tt.requestBody)
-			}
-
-			req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/token", bytes.NewReader(body))
+			req := httptest.NewRequest(http.MethodPost, tt.path, nil)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			if tt.apiKey != "" {
+				req.Header.Set("X-API-Key", tt.apiKey)
+			}
 			rec := httptest.NewRecorder()
 
 			router.echo.ServeHTTP(rec, req)
@@ -323,24 +337,28 @@ func TestRouter_SwaggerEndpoints(t *testing.T) {
 		path           string
 		method         string
 		expectedStatus int
+		allow404       bool // 404を許容するかどうか
 	}{
 		{
 			name:           "Swagger UIエンドポイント",
-			path:           "/swagger",
+			path:           "/swagger/index.html",
 			method:         http.MethodGet,
 			expectedStatus: http.StatusOK,
+			allow404:       false,
 		},
 		{
 			name:           "ReDocエンドポイント",
 			path:           "/redoc",
 			method:         http.MethodGet,
 			expectedStatus: http.StatusOK,
+			allow404:       false,
 		},
 		{
 			name:           "OpenAPI仕様エンドポイント",
 			path:           "/openapi.yaml",
 			method:         http.MethodGet,
-			expectedStatus: http.StatusOK, // ファイルが存在しない場合は404になる可能性がある
+			expectedStatus: http.StatusNotFound, // 実装されていないため404を期待
+			allow404:       true,
 		},
 	}
 
@@ -351,8 +369,8 @@ func TestRouter_SwaggerEndpoints(t *testing.T) {
 
 			router.echo.ServeHTTP(rec, req)
 
-			// OpenAPI仕様ファイルが存在しない場合は404を許容
-			if tt.path == "/openapi.yaml" {
+			// 404を許容する場合は、OKまたはNotFoundのいずれかを許容
+			if tt.allow404 {
 				assert.Contains(t, []int{http.StatusOK, http.StatusNotFound}, rec.Code, "path: %s", tt.path)
 			} else {
 				assert.Equal(t, tt.expectedStatus, rec.Code, "path: %s", tt.path)
@@ -412,13 +430,10 @@ func TestRouter_PaymentHandlerRoutes(t *testing.T) {
 func TestRouter_AuthenticatedEndpoints(t *testing.T) {
 	router, mockCurrencyRepo, _, _, _ := setupTestRouter(t)
 
-	// まず認証トークンを取得
-	tokenReqBody := map[string]interface{}{
-		"user_id": "user123",
-	}
-	body, _ := json.Marshal(tokenReqBody)
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/token", bytes.NewReader(body))
+	// まず認証トークンを取得（管理API経由）
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/users/user123/issue_token", nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("X-API-Key", "test-admin-api-key")
 	rec := httptest.NewRecorder()
 
 	router.echo.ServeHTTP(rec, req)
@@ -437,8 +452,8 @@ func TestRouter_AuthenticatedEndpoints(t *testing.T) {
 		expectedStatus int
 	}{
 		{
-			name:   "認証が必要なエンドポイント: 残高取得",
-			path:   "/api/v1/users/user123/balance",
+			name:   "認証が必要なエンドポイント: 残高取得（ユーザーAPI）",
+			path:   "/api/v1/me/balance",
 			method: http.MethodGet,
 			setupMock: func(mcr *MockCurrencyRepository) {
 				// モックを設定して正常に動作することを確認
@@ -505,7 +520,7 @@ func TestRouter_RouteRegistration(t *testing.T) {
 	// 主要なエンドポイントが登録されていることを確認
 	endpoints := []string{
 		"/health",
-		"/api/v1/auth/token",
+		"/api/v1/admin/users/:user_id/issue_token",
 		"/swagger",
 		"/redoc",
 		"/openapi.yaml",

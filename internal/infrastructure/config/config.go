@@ -15,6 +15,7 @@ type Config struct {
 	Database      DatabaseConfig
 	Redis         RedisConfig
 	JWT           JWTConfig
+	AdminAPI      AdminAPIConfig
 	OpenTelemetry OpenTelemetryConfig
 	Environment   string
 }
@@ -54,6 +55,13 @@ type JWTConfig struct {
 	Secret     string
 	Expiration time.Duration
 	Issuer     string
+}
+
+// AdminAPIConfig 管理API設定
+type AdminAPIConfig struct {
+	Enabled    bool
+	APIKey     string
+	AllowedIPs []string // オプション: IP制限
 }
 
 // OpenTelemetryConfig OpenTelemetry設定
@@ -105,6 +113,11 @@ func Load() (*Config, error) {
 			Expiration: getEnvAsDuration("JWT_EXPIRATION", 24*time.Hour),
 			Issuer:     getEnv("JWT_ISSUER", "gem-server"),
 		},
+		AdminAPI: AdminAPIConfig{
+			Enabled:    getEnvAsBool("ADMIN_API_ENABLED", false),
+			APIKey:     getEnv("ADMIN_API_KEY", ""),
+			AllowedIPs: getEnvAsStringSlice("ADMIN_API_ALLOWED_IPS", []string{}),
+		},
 		OpenTelemetry: OpenTelemetryConfig{
 			Enabled:         getEnvAsBool("OTEL_ENABLED", true),
 			ServiceName:     getEnv("OTEL_SERVICE_NAME", "gem-server"),
@@ -134,6 +147,9 @@ func (c *Config) validate() error {
 	}
 	if c.JWT.Secret == "" {
 		return fmt.Errorf("JWT_SECRET is required")
+	}
+	if c.AdminAPI.Enabled && c.AdminAPI.APIKey == "" {
+		return fmt.Errorf("ADMIN_API_KEY is required when ADMIN_API_ENABLED is true")
 	}
 	return nil
 }
@@ -199,4 +215,55 @@ func getEnvAsDuration(key string, defaultValue time.Duration) time.Duration {
 		return defaultValue
 	}
 	return value
+}
+
+// getEnvAsStringSlice 環境変数を文字列スライスとして取得（カンマ区切り）
+func getEnvAsStringSlice(key string, defaultValue []string) []string {
+	valueStr := getEnv(key, "")
+	if valueStr == "" {
+		return defaultValue
+	}
+	// カンマ区切りで分割
+	parts := []string{}
+	for _, part := range splitString(valueStr, ",") {
+		trimmed := trimSpace(part)
+		if trimmed != "" {
+			parts = append(parts, trimmed)
+		}
+	}
+	if len(parts) == 0 {
+		return defaultValue
+	}
+	return parts
+}
+
+// splitString 文字列を区切り文字で分割
+func splitString(s, sep string) []string {
+	if s == "" {
+		return []string{}
+	}
+	parts := []string{}
+	start := 0
+	for i := 0; i < len(s); i++ {
+		if i+len(sep) <= len(s) && s[i:i+len(sep)] == sep {
+			parts = append(parts, s[start:i])
+			start = i + len(sep)
+			i += len(sep) - 1
+		}
+	}
+	parts = append(parts, s[start:])
+	return parts
+}
+
+// trimSpace 文字列の前後の空白を削除
+func trimSpace(s string) string {
+	start := 0
+	end := len(s)
+	for start < end && (s[start] == ' ' || s[start] == '\t' || s[start] == '\n' || s[start] == '\r') {
+		start++
+	}
+	for end > start && (s[end-1] == ' ' || s[end-1] == '\t' || s[end-1] == '\n' || s[end-1] == '\r') {
+		end--
+	}
+	return s[start:end]
 }

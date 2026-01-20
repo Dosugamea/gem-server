@@ -85,13 +85,6 @@ definitions:
         example: invalid request body
         type: string
     type: object
-  handler.GenerateTokenRequest:
-    description: トークン生成リクエスト
-    properties:
-      user_id:
-        example: user123
-        type: string
-    type: object
   handler.GenerateTokenResponse:
     description: トークン生成レスポンス
     properties:
@@ -156,9 +149,6 @@ definitions:
       payment_request_id:
         example: req_123
         type: string
-      user_id:
-        example: user123
-        type: string
     type: object
   handler.ProcessPaymentResponse:
     description: 決済処理レスポンス
@@ -185,9 +175,6 @@ definitions:
     properties:
       code:
         example: REDEEM123
-        type: string
-      user_id:
-        example: user123
         type: string
     type: object
   handler.RedeemCodeResponse:
@@ -270,18 +257,138 @@ info:
   title: Gem Server API
   version: "1.0"
 paths:
-  /auth/token:
+  /admin/users/{user_id}/balance:
+    get:
+      consumes:
+      - application/json
+      description: 指定されたユーザーの通貨残高を取得します
+      parameters:
+      - description: ユーザーID
+        example: user123
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: APIキー
+        in: header
+        name: X-API-Key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 残高取得成功
+          schema:
+            $ref: '#/definitions/handler.BalanceResponse'
+        "400":
+          description: 不正なリクエスト
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: 認証エラー
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 残高を取得（管理API）
+      tags:
+      - admin
+  /admin/users/{user_id}/consume:
+    post:
+      consumes:
+      - application/json
+      description: 指定されたユーザーの通貨を消費します。優先順位制御も可能です
+      parameters:
+      - description: ユーザーID
+        example: user123
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: APIキー
+        in: header
+        name: X-API-Key
+        required: true
+        type: string
+      - description: 通貨消費リクエスト
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ConsumeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 通貨消費成功
+          schema:
+            $ref: '#/definitions/handler.ConsumeResponse'
+        "400":
+          description: 不正なリクエスト
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: 認証エラー
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: 残高不足
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 通貨を消費（管理API）
+      tags:
+      - admin
+  /admin/users/{user_id}/grant:
+    post:
+      consumes:
+      - application/json
+      description: 指定されたユーザーに無償通貨を付与します
+      parameters:
+      - description: ユーザーID
+        example: user123
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: APIキー
+        in: header
+        name: X-API-Key
+        required: true
+        type: string
+      - description: 通貨付与リクエスト
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.GrantRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 通貨付与成功
+          schema:
+            $ref: '#/definitions/handler.GrantResponse'
+        "400":
+          description: 不正なリクエスト
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: 認証エラー
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 通貨を付与（管理API）
+      tags:
+      - admin
+  /admin/users/{user_id}/issue_token:
     post:
       consumes:
       - application/json
       description: ユーザーIDを元にJWT認証トークンを生成します
       parameters:
-      - description: トークン生成リクエスト
-        in: body
-        name: request
+      - description: ユーザーID
+        in: path
+        name: user_id
         required: true
-        schema:
-          $ref: '#/definitions/handler.GenerateTokenRequest'
+        type: string
       produces:
       - application/json
       responses:
@@ -295,7 +402,64 @@ paths:
             $ref: '#/definitions/handler.ErrorResponse'
       summary: 認証トークンを生成
       tags:
-      - auth
+      - admin
+  /admin/users/{user_id}/transactions:
+    get:
+      consumes:
+      - application/json
+      description: 指定されたユーザーのトランザクション履歴を取得します。ページネーションとフィルタリングに対応しています
+      parameters:
+      - description: ユーザーID
+        example: user123
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: APIキー
+        in: header
+        name: X-API-Key
+        required: true
+        type: string
+      - default: 50
+        description: '取得件数（デフォルト: 50, 最大: 100)'
+        example: 50
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: 'オフセット（デフォルト: 0)'
+        example: 0
+        in: query
+        name: offset
+        type: integer
+      - description: 通貨タイプでフィルタ（paid/free）
+        example: paid
+        in: query
+        name: currency_type
+        type: string
+      - description: トランザクションタイプでフィルタ（grant/consume/payment/redemption）
+        example: consume
+        in: query
+        name: transaction_type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 履歴取得成功
+          schema:
+            $ref: '#/definitions/handler.TransactionHistoryResponse'
+        "400":
+          description: 不正なリクエスト
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: 認証エラー
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: トランザクション履歴を取得（管理API）
+      tags:
+      - admin
   /codes/redeem:
     post:
       consumes:
@@ -332,6 +496,79 @@ paths:
       summary: コードを引き換え
       tags:
       - redemption
+  /me/balance:
+    get:
+      consumes:
+      - application/json
+      description: 自分の通貨残高を取得します
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 残高取得成功
+          schema:
+            $ref: '#/definitions/handler.BalanceResponse'
+        "400":
+          description: 不正なリクエスト
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: 認証エラー
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: 残高を取得
+      tags:
+      - currency
+  /me/transactions:
+    get:
+      consumes:
+      - application/json
+      description: 自分のトランザクション履歴を取得します。ページネーションとフィルタリングに対応しています
+      parameters:
+      - default: 50
+        description: '取得件数（デフォルト: 50, 最大: 100)'
+        example: 50
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: 'オフセット（デフォルト: 0)'
+        example: 0
+        in: query
+        name: offset
+        type: integer
+      - description: 通貨タイプでフィルタ（paid/free）
+        example: paid
+        in: query
+        name: currency_type
+        type: string
+      - description: トランザクションタイプでフィルタ（grant/consume/payment/redemption）
+        example: consume
+        in: query
+        name: transaction_type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 履歴取得成功
+          schema:
+            $ref: '#/definitions/handler.TransactionHistoryResponse'
+        "400":
+          description: 不正なリクエスト
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: 認証エラー
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: トランザクション履歴を取得
+      tags:
+      - history
   /payment/process:
     post:
       consumes:
@@ -368,172 +605,6 @@ paths:
       summary: 決済を処理
       tags:
       - payment
-  /users/{user_id}/balance:
-    get:
-      consumes:
-      - application/json
-      description: 指定されたユーザーの通貨残高を取得します
-      parameters:
-      - description: ユーザーID
-        example: user123
-        in: path
-        name: user_id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 残高取得成功
-          schema:
-            $ref: '#/definitions/handler.BalanceResponse'
-        "400":
-          description: 不正なリクエスト
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "403":
-          description: 認証エラー
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: 残高を取得
-      tags:
-      - currency
-  /users/{user_id}/consume:
-    post:
-      consumes:
-      - application/json
-      description: 指定されたユーザーの通貨を消費します。優先順位制御も可能です
-      parameters:
-      - description: ユーザーID
-        example: user123
-        in: path
-        name: user_id
-        required: true
-        type: string
-      - description: 通貨消費リクエスト
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.ConsumeRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 通貨消費成功
-          schema:
-            $ref: '#/definitions/handler.ConsumeResponse'
-        "400":
-          description: 不正なリクエスト
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "403":
-          description: 認証エラー
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "409":
-          description: 残高不足
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: 通貨を消費
-      tags:
-      - currency
-  /users/{user_id}/grant:
-    post:
-      consumes:
-      - application/json
-      description: 指定されたユーザーに無償通貨を付与します
-      parameters:
-      - description: ユーザーID
-        example: user123
-        in: path
-        name: user_id
-        required: true
-        type: string
-      - description: 通貨付与リクエスト
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.GrantRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 通貨付与成功
-          schema:
-            $ref: '#/definitions/handler.GrantResponse'
-        "400":
-          description: 不正なリクエスト
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "403":
-          description: 認証エラー
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: 通貨を付与
-      tags:
-      - currency
-  /users/{user_id}/transactions:
-    get:
-      consumes:
-      - application/json
-      description: 指定されたユーザーのトランザクション履歴を取得します。ページネーションとフィルタリングに対応しています
-      parameters:
-      - description: ユーザーID
-        example: user123
-        in: path
-        name: user_id
-        required: true
-        type: string
-      - default: 50
-        description: '取得件数（デフォルト: 50, 最大: 100)'
-        example: 50
-        in: query
-        name: limit
-        type: integer
-      - default: 0
-        description: 'オフセット（デフォルト: 0)'
-        example: 0
-        in: query
-        name: offset
-        type: integer
-      - description: 通貨タイプでフィルタ（paid/free）
-        example: paid
-        in: query
-        name: currency_type
-        type: string
-      - description: トランザクションタイプでフィルタ（grant/consume/payment/redemption）
-        example: consume
-        in: query
-        name: transaction_type
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 履歴取得成功
-          schema:
-            $ref: '#/definitions/handler.TransactionHistoryResponse'
-        "400":
-          description: 不正なリクエスト
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "403":
-          description: 認証エラー
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: トランザクション履歴を取得
-      tags:
-      - history
 schemes:
 - http
 - https

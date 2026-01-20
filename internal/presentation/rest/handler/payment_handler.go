@@ -13,7 +13,6 @@ import (
 // @Description 決済処理リクエスト
 type ProcessPaymentRequest struct {
 	PaymentRequestID string            `json:"payment_request_id" example:"req_123"`
-	UserID           string            `json:"user_id" example:"user123"`
 	MethodName       string            `json:"method_name" example:"credit_card"`
 	Details          map[string]string `json:"details"`
 	Amount           string            `json:"amount" example:"1000"`
@@ -56,9 +55,14 @@ func NewPaymentHandler(paymentService *paymentapp.PaymentApplicationService) *Pa
 // @Failure 409 {object} ErrorResponse "残高不足"
 // @Router /payment/process [post]
 func (h *PaymentHandler) ProcessPayment(c echo.Context) error {
+	// トークンからuser_idを取得
+	userID, ok := c.Get("user_id").(string)
+	if !ok || userID == "" {
+		return echo.NewHTTPError(http.StatusUnauthorized, "user_id not found in token")
+	}
+
 	var reqBody struct {
 		PaymentRequestID string            `json:"payment_request_id"`
-		UserID           string            `json:"user_id"`
 		MethodName       string            `json:"method_name"`
 		Details          map[string]string `json:"details"`
 		Amount           string            `json:"amount"`
@@ -69,12 +73,6 @@ func (h *PaymentHandler) ProcessPayment(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
 	}
 
-	// トークンのuser_idとリクエストのuser_idが一致するか確認
-	tokenUserID, ok := c.Get("user_id").(string)
-	if !ok || tokenUserID != reqBody.UserID {
-		return echo.NewHTTPError(http.StatusForbidden, "user_id mismatch")
-	}
-
 	// 金額をint64に変換
 	amount, err := strconv.ParseInt(reqBody.Amount, 10, 64)
 	if err != nil {
@@ -83,7 +81,7 @@ func (h *PaymentHandler) ProcessPayment(c echo.Context) error {
 
 	req := &paymentapp.ProcessPaymentRequest{
 		PaymentRequestID: reqBody.PaymentRequestID,
-		UserID:           reqBody.UserID,
+		UserID:           userID,
 		MethodName:       reqBody.MethodName,
 		Details:          reqBody.Details,
 		Amount:           amount,

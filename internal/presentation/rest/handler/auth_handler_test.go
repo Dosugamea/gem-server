@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -22,33 +21,17 @@ import (
 func TestAuthHandler_GenerateToken(t *testing.T) {
 	tests := []struct {
 		name           string
-		requestBody    map[string]interface{}
+		userID         string
 		expectedStatus int
 	}{
 		{
-			name: "正常系: トークン生成成功",
-			requestBody: map[string]interface{}{
-				"user_id": "user123",
-			},
+			name:           "正常系: トークン生成成功",
+			userID:         "user123",
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name:           "異常系: 無効なリクエストボディ",
-			requestBody:    nil,
-			expectedStatus: http.StatusBadRequest,
-		},
-		{
-			name: "異常系: user_idが空",
-			requestBody: map[string]interface{}{
-				"user_id": "",
-			},
-			expectedStatus: http.StatusBadRequest,
-		},
-		{
-			name: "異常系: user_idが存在しない",
-			requestBody: map[string]interface{}{
-				"other_field": "value",
-			},
+			name:           "異常系: user_idが空",
+			userID:         "",
 			expectedStatus: http.StatusBadRequest,
 		},
 	}
@@ -70,14 +53,11 @@ func TestAuthHandler_GenerateToken(t *testing.T) {
 			service := authapp.NewAuthApplicationService(cfg, logger)
 			handler := NewAuthHandler(service)
 
-			// ルーティングを設定
-			e.POST("/auth/token", handler.GenerateToken)
+			// ルーティングを設定（パスパラメータを使用）
+			e.POST("/admin/users/:user_id/issue_token", handler.GenerateToken)
 
-			var body []byte
-			if tt.requestBody != nil {
-				body, _ = json.Marshal(tt.requestBody)
-			}
-			req := httptest.NewRequest(http.MethodPost, "/auth/token", bytes.NewReader(body))
+			path := "/admin/users/" + tt.userID + "/issue_token"
+			req := httptest.NewRequest(http.MethodPost, path, nil)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 

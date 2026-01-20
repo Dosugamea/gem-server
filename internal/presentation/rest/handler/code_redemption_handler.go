@@ -12,8 +12,7 @@ import (
 // RedeemCodeRequest コード引き換えリクエスト
 // @Description コード引き換えリクエスト
 type RedeemCodeRequest struct {
-	Code   string `json:"code" example:"REDEEM123"`
-	UserID string `json:"user_id" example:"user123"`
+	Code string `json:"code" example:"REDEEM123"`
 }
 
 // RedeemCodeResponse コード引き換えレスポンス
@@ -54,24 +53,23 @@ func NewCodeRedemptionHandler(redemptionService *redemptionapp.CodeRedemptionApp
 // @Failure 404 {object} ErrorResponse "コードが見つからない"
 // @Router /codes/redeem [post]
 func (h *CodeRedemptionHandler) RedeemCode(c echo.Context) error {
+	// トークンからuser_idを取得
+	userID, ok := c.Get("user_id").(string)
+	if !ok || userID == "" {
+		return echo.NewHTTPError(http.StatusUnauthorized, "user_id not found in token")
+	}
+
 	var reqBody struct {
-		Code   string `json:"code"`
-		UserID string `json:"user_id"`
+		Code string `json:"code"`
 	}
 
 	if err := c.Bind(&reqBody); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
 	}
 
-	// トークンのuser_idとリクエストのuser_idが一致するか確認
-	tokenUserID, ok := c.Get("user_id").(string)
-	if !ok || tokenUserID != reqBody.UserID {
-		return echo.NewHTTPError(http.StatusForbidden, "user_id mismatch")
-	}
-
 	req := &redemptionapp.RedeemCodeRequest{
 		Code:   reqBody.Code,
-		UserID: reqBody.UserID,
+		UserID: userID,
 	}
 
 	resp, err := h.redemptionService.Redeem(c.Request().Context(), req)

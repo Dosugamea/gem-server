@@ -10,18 +10,21 @@ servers:
     description: Production server
 
 paths:
-  /auth/token:
+  /admin/users/{user_id}/issue_token:
     post:
       summary: JWTトークン生成
       operationId: generateToken
       tags:
-        - Authentication
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/GenerateTokenRequest"
+        - Admin
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ユーザーID
       responses:
         "200":
           description: 成功
@@ -31,6 +34,8 @@ paths:
                 $ref: "#/components/schemas/GenerateTokenResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -271,17 +276,12 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
 
   schemas:
-    GenerateTokenRequest:
-      type: object
-      required:
-        - user_id
-      properties:
-        user_id:
-          type: string
-          description: ユーザーID
-
     GenerateTokenResponse:
       type: object
       properties:

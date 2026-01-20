@@ -27,9 +27,55 @@ Webサイト・ゲーム内専用の仮想通貨を管理するマイクロサ�
 - **バックエンド**: Golang (Echo Framework + gRPC)
 - **データベース**: MySQL
 - **Payment Handler**: Service Worker + 決済アプリウィンドウ（JavaScript）
-- **認証**: JWT トークンベース認証
+- **認証**: 
+  - ユーザーAPI: JWT トークンベース認証
+  - 管理API: APIキー認証
 - **可観測性**: OpenTelemetry (トレーシング、メトリクス、ログ)
 - **API仕様**: OpenAPI 3.0 (Swagger/Redoc)
+
+## API構成
+
+本システムは以下の3種類のAPIを提供します：
+
+### 1. ユーザーAPI（公開API）- REST `/api/v1/me/*`
+
+ブラウザから直接呼び出す公開API。ユーザー自身のリソースにのみアクセス可能。
+
+**エンドポイント:**
+- `GET /api/v1/me/balance` - 自分の残高を取得
+- `GET /api/v1/me/transactions` - 自分のトランザクション履歴を取得
+- `POST /api/v1/payment/process` - 決済処理（自分のアカウントから消費）
+- `POST /api/v1/codes/redeem` - コードを引き換え（自分のアカウントに付与）
+
+**認証:** JWTトークン（Bearer認証）
+
+### 2. 管理API（内部API）- REST `/api/v1/admin/*` と gRPC `CurrencyService`
+
+管理者や他のマイクロサービス（ゲームサーバーなど）が使用する内部API。
+**RESTとgRPCの両方で同じ機能を提供し、どちらを使っても同じことができる。**
+
+**REST API エンドポイント:**
+- `POST /api/v1/admin/users/{user_id}/grant` - ユーザーに通貨を付与
+- `POST /api/v1/admin/users/{user_id}/consume` - ユーザーの通貨を消費
+- `GET /api/v1/admin/users/{user_id}/balance` - ユーザーの残高を取得
+- `GET /api/v1/admin/users/{user_id}/transactions` - ユーザーのトランザクション履歴を取得
+
+**gRPC API メソッド:**
+- `Grant` - ユーザーに通貨を付与
+- `Consume` - ユーザーの通貨を消費
+- `GetBalance` - ユーザーの残高を取得
+- `GetTransactionHistory` - ユーザーのトランザクション履歴を取得
+
+**認証:** APIキー認証（`X-API-Key`ヘッダー/メタデータ）
+
+**機能の対応関係:**
+
+| 機能 | REST API | gRPC API |
+|------|----------|----------|
+| 通貨付与 | `POST /api/v1/admin/users/{user_id}/grant` | `Grant` |
+| 通貨消費 | `POST /api/v1/admin/users/{user_id}/consume` | `Consume` |
+| 残高取得 | `GET /api/v1/admin/users/{user_id}/balance` | `GetBalance` |
+| 履歴取得 | `GET /api/v1/admin/users/{user_id}/transactions` | `GetTransactionHistory` |
 
 ## アーキテクチャ
 
@@ -114,6 +160,11 @@ DB_NAME=gem_db
 
 # JWT設定
 JWT_SECRET=your-secret-key
+
+# 管理API設定
+ADMIN_API_ENABLED=true
+ADMIN_API_KEY=your-admin-api-key
+ADMIN_API_ALLOWED_IPS=127.0.0.1,10.0.0.0/8  # オプション: IP制限（カンマ区切り）
 
 # サーバー設定
 SERVER_PORT=8080

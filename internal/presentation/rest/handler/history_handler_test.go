@@ -22,7 +22,6 @@ import (
 func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 	tests := []struct {
 		name             string
-		userID           string
 		tokenUserID      string
 		queryParams      map[string]string
 		setupMock        func(*MockTransactionRepository)
@@ -31,7 +30,6 @@ func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 	}{
 		{
 			name:        "正常系: 履歴取得成功",
-			userID:      "user123",
 			tokenUserID: "user123",
 			queryParams: map[string]string{},
 			setupMock: func(mtr *MockTransactionRepository) {
@@ -76,7 +74,6 @@ func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 		},
 		{
 			name:        "正常系: limitとoffsetを指定",
-			userID:      "user123",
 			tokenUserID: "user123",
 			queryParams: map[string]string{
 				"limit":  "10",
@@ -97,7 +94,6 @@ func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 		},
 		{
 			name:        "正常系: currency_typeでフィルタ",
-			userID:      "user123",
 			tokenUserID: "user123",
 			queryParams: map[string]string{
 				"currency_type": "paid",
@@ -122,7 +118,6 @@ func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 		},
 		{
 			name:        "正常系: transaction_typeでフィルタ",
-			userID:      "user123",
 			tokenUserID: "user123",
 			queryParams: map[string]string{
 				"transaction_type": "grant",
@@ -146,24 +141,14 @@ func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name:           "異常系: user_idが空",
-			userID:         "",
-			tokenUserID:    "user123",
+			name:           "異常系: user_idがトークンにない",
+			tokenUserID:    "",
 			queryParams:    map[string]string{},
 			setupMock:      func(mtr *MockTransactionRepository) {},
-			expectedStatus: http.StatusBadRequest,
-		},
-		{
-			name:           "異常系: user_id不一致",
-			userID:         "user123",
-			tokenUserID:    "user456",
-			queryParams:    map[string]string{},
-			setupMock:      func(mtr *MockTransactionRepository) {},
-			expectedStatus: http.StatusForbidden,
+			expectedStatus: http.StatusUnauthorized,
 		},
 		{
 			name:        "異常系: 無効なlimit（負の値）",
-			userID:      "user123",
 			tokenUserID: "user123",
 			queryParams: map[string]string{
 				"limit": "-1",
@@ -173,7 +158,6 @@ func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 		},
 		{
 			name:        "異常系: 無効なlimit（100を超える）",
-			userID:      "user123",
 			tokenUserID: "user123",
 			queryParams: map[string]string{
 				"limit": "101",
@@ -183,7 +167,6 @@ func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 		},
 		{
 			name:        "異常系: 無効なlimit（文字列）",
-			userID:      "user123",
 			tokenUserID: "user123",
 			queryParams: map[string]string{
 				"limit": "invalid",
@@ -193,7 +176,6 @@ func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 		},
 		{
 			name:        "異常系: 無効なoffset（負の値）",
-			userID:      "user123",
 			tokenUserID: "user123",
 			queryParams: map[string]string{
 				"offset": "-1",
@@ -203,7 +185,6 @@ func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 		},
 		{
 			name:        "異常系: 無効なoffset（文字列）",
-			userID:      "user123",
 			tokenUserID: "user123",
 			queryParams: map[string]string{
 				"offset": "invalid",
@@ -234,8 +215,102 @@ func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 
 			handler := NewHistoryHandler(appService)
 
-			// URLにクエリパラメータを追加
-			url := "/api/v1/users/" + tt.userID + "/transactions"
+			// URLにクエリパラメータを追加（ユーザーAPI）
+			url := "/me/transactions"
+			req := httptest.NewRequest(http.MethodGet, url, nil)
+			q := req.URL.Query()
+			for k, v := range tt.queryParams {
+				q.Add(k, v)
+			}
+			req.URL.RawQuery = q.Encode()
+
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			if tt.tokenUserID != "" {
+				c.Set("user_id", tt.tokenUserID)
+			}
+
+			// ミドルウェアを手動で実行
+			middlewareFunc := restmiddleware.ErrorHandlerMiddleware(logger)
+			handlerFunc := middlewareFunc(func(c echo.Context) error {
+				return handler.GetTransactionHistory(c)
+			})
+			err := handlerFunc(c)
+			if err != nil {
+				e.HTTPErrorHandler(err, c)
+			}
+			assert.Equal(t, tt.expectedStatus, rec.Code)
+
+			if tt.validateResponse != nil {
+				tt.validateResponse(t, rec)
+			}
+		})
+	}
+}
+
+func TestHistoryHandler_GetTransactionHistoryAdmin(t *testing.T) {
+	tests := []struct {
+		name             string
+		userID           string
+		queryParams      map[string]string
+		setupMock        func(*MockTransactionRepository)
+		expectedStatus   int
+		validateResponse func(*testing.T, *httptest.ResponseRecorder)
+	}{
+		{
+			name:        "正常系: 履歴取得成功",
+			userID:      "user123",
+			queryParams: map[string]string{},
+			setupMock: func(mtr *MockTransactionRepository) {
+				txns := []*transaction.Transaction{
+					transaction.NewTransaction(
+						"txn1",
+						"user123",
+						transaction.TransactionTypeGrant,
+						currency.CurrencyTypePaid,
+						1000,
+						0,
+						1000,
+						transaction.TransactionStatusCompleted,
+						map[string]interface{}{},
+					),
+				}
+				mtr.On("FindByUserID", mock.Anything, "user123", 50, 0).Return(txns, nil)
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "異常系: user_idが空",
+			userID:         "",
+			queryParams:    map[string]string{},
+			setupMock:      func(mtr *MockTransactionRepository) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := echo.New()
+			mockTransactionRepo := new(MockTransactionRepository)
+			tracer := noop.NewTracerProvider().Tracer("test")
+			logger := otelinfra.NewLogger(tracer)
+			metrics, _ := otelinfra.NewMetrics("test")
+
+			// エラーハンドリングミドルウェアを設定
+			e.Use(restmiddleware.ErrorHandlerMiddleware(logger))
+
+			tt.setupMock(mockTransactionRepo)
+
+			appService := historyapp.NewHistoryApplicationService(
+				mockTransactionRepo,
+				logger,
+				metrics,
+			)
+
+			handler := NewHistoryHandler(appService)
+
+			// URLにクエリパラメータを追加（管理API）
+			url := "/admin/users/" + tt.userID + "/transactions"
 			req := httptest.NewRequest(http.MethodGet, url, nil)
 			q := req.URL.Query()
 			for k, v := range tt.queryParams {
@@ -247,14 +322,11 @@ func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetParamNames("user_id")
 			c.SetParamValues(tt.userID)
-			if tt.tokenUserID != "" {
-				c.Set("user_id", tt.tokenUserID)
-			}
 
 			// ミドルウェアを手動で実行
 			middlewareFunc := restmiddleware.ErrorHandlerMiddleware(logger)
 			handlerFunc := middlewareFunc(func(c echo.Context) error {
-				return handler.GetTransactionHistory(c)
+				return handler.GetTransactionHistoryAdmin(c)
 			})
 			err := handlerFunc(c)
 			if err != nil {

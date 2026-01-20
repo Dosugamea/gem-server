@@ -119,25 +119,20 @@ func setupRoutes(
 	// API v1グループ
 	api := e.Group("/api/v1")
 
-	// 認証エンドポイント（認証不要）
-	api.POST("/auth/token", authHandler.GenerateToken)
+	// ユーザーAPI（JWT認証）
+	userAPI := api.Group("", restmiddleware.AuthMiddleware(&cfg.JWT, logger))
+	userAPI.GET("/me/balance", currencyHandler.GetBalance)
+	userAPI.GET("/me/transactions", historyHandler.GetTransactionHistory)
+	userAPI.POST("/payment/process", paymentHandler.ProcessPayment)
+	userAPI.POST("/codes/redeem", redemptionHandler.RedeemCode)
 
-	// 認証が必要なエンドポイント
-	authGroup := api.Group("", restmiddleware.AuthMiddleware(&cfg.JWT, logger))
-
-	// 通貨関連エンドポイント
-	authGroup.GET("/users/:user_id/balance", currencyHandler.GetBalance)
-	authGroup.POST("/users/:user_id/grant", currencyHandler.GrantCurrency)
-	authGroup.POST("/users/:user_id/consume", currencyHandler.ConsumeCurrency)
-
-	// 決済関連エンドポイント
-	authGroup.POST("/payment/process", paymentHandler.ProcessPayment)
-
-	// コード引き換えエンドポイント
-	authGroup.POST("/codes/redeem", redemptionHandler.RedeemCode)
-
-	// 履歴関連エンドポイント
-	authGroup.GET("/users/:user_id/transactions", historyHandler.GetTransactionHistory)
+	// 管理API（APIキー認証）
+	adminAPI := api.Group("/admin", restmiddleware.APIKeyMiddleware(&cfg.AdminAPI, logger))
+	adminAPI.POST("/users/:user_id/issue_token", authHandler.GenerateToken)
+	adminAPI.POST("/users/:user_id/grant", currencyHandler.GrantCurrency)
+	adminAPI.POST("/users/:user_id/consume", currencyHandler.ConsumeCurrency)
+	adminAPI.GET("/users/:user_id/balance", currencyHandler.GetBalanceAdmin)
+	adminAPI.GET("/users/:user_id/transactions", historyHandler.GetTransactionHistoryAdmin)
 
 	// ヘルスチェックエンドポイント（認証不要）
 	e.GET("/health", func(c echo.Context) error {

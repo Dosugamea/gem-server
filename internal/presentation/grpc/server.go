@@ -59,9 +59,9 @@ func NewServerWithListener(
 	listener net.Listener,
 	port int,
 ) (*Server, error) {
-	// インターセプターを設定
+	// インターセプターを設定（APIキー認証のみ）
 	opts := []grpc.ServerOption{
-		grpc.UnaryInterceptor(interceptor.AuthInterceptor(&cfg.JWT, logger)),
+		grpc.UnaryInterceptor(interceptor.APIKeyInterceptor(&cfg.AdminAPI, logger)),
 		grpc.KeepaliveParams(keepalive.ServerParameters{
 			MaxConnectionIdle:     15 * time.Second,
 			MaxConnectionAge:      30 * time.Second,

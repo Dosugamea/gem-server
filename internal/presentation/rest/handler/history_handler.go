@@ -43,33 +43,58 @@ func NewHistoryHandler(historyService *historyapp.HistoryApplicationService) *Hi
 	}
 }
 
-// GetTransactionHistory トランザクション履歴取得ハンドラー
+// GetTransactionHistory トランザクション履歴取得ハンドラー（ユーザーAPI用）
 // @Summary トランザクション履歴を取得
-// @Description 指定されたユーザーのトランザクション履歴を取得します。ページネーションとフィルタリングに対応しています
+// @Description 自分のトランザクション履歴を取得します。ページネーションとフィルタリングに対応しています
 // @Tags history
 // @Accept json
 // @Produce json
 // @Security Bearer
-// @Param user_id path string true "ユーザーID" example(user123)
 // @Param limit query int false "取得件数（デフォルト: 50, 最大: 100)" default(50) example(50)
 // @Param offset query int false "オフセット（デフォルト: 0)" default(0) example(0)
 // @Param currency_type query string false "通貨タイプでフィルタ（paid/free）" example(paid)
 // @Param transaction_type query string false "トランザクションタイプでフィルタ（grant/consume/payment/redemption）" example(consume)
 // @Success 200 {object} TransactionHistoryResponse "履歴取得成功"
 // @Failure 400 {object} ErrorResponse "不正なリクエスト"
-// @Failure 403 {object} ErrorResponse "認証エラー"
-// @Router /users/{user_id}/transactions [get]
+// @Failure 401 {object} ErrorResponse "認証エラー"
+// @Router /me/transactions [get]
 func (h *HistoryHandler) GetTransactionHistory(c echo.Context) error {
+	// トークンからuser_idを取得
+	userID, ok := c.Get("user_id").(string)
+	if !ok || userID == "" {
+		return echo.NewHTTPError(http.StatusUnauthorized, "user_id not found in token")
+	}
+
+	return h.getTransactionHistoryInternal(c, userID)
+}
+
+// GetTransactionHistoryAdmin トランザクション履歴取得ハンドラー（管理API用）
+// @Summary トランザクション履歴を取得（管理API）
+// @Description 指定されたユーザーのトランザクション履歴を取得します。ページネーションとフィルタリングに対応しています
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Param user_id path string true "ユーザーID" example(user123)
+// @Param X-API-Key header string true "APIキー"
+// @Param limit query int false "取得件数（デフォルト: 50, 最大: 100)" default(50) example(50)
+// @Param offset query int false "オフセット（デフォルト: 0)" default(0) example(0)
+// @Param currency_type query string false "通貨タイプでフィルタ（paid/free）" example(paid)
+// @Param transaction_type query string false "トランザクションタイプでフィルタ（grant/consume/payment/redemption）" example(consume)
+// @Success 200 {object} TransactionHistoryResponse "履歴取得成功"
+// @Failure 400 {object} ErrorResponse "不正なリクエスト"
+// @Failure 401 {object} ErrorResponse "認証エラー"
+// @Router /admin/users/{user_id}/transactions [get]
+func (h *HistoryHandler) GetTransactionHistoryAdmin(c echo.Context) error {
 	userID := c.Param("user_id")
 	if userID == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "user_id is required")
 	}
 
-	// パスパラメータのuser_idとトークンのuser_idが一致するか確認
-	tokenUserID, ok := c.Get("user_id").(string)
-	if !ok || tokenUserID != userID {
-		return echo.NewHTTPError(http.StatusForbidden, "user_id mismatch")
-	}
+	return h.getTransactionHistoryInternal(c, userID)
+}
+
+// getTransactionHistoryInternal トランザクション履歴取得の内部実装
+func (h *HistoryHandler) getTransactionHistoryInternal(c echo.Context, userID string) error {
 
 	// クエリパラメータを取得
 	limit := 50 // デフォルト値

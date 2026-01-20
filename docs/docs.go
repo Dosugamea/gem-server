@@ -15,7 +15,187 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/auth/token": {
+        "/admin/users/{user_id}/balance": {
+            "get": {
+                "description": "指定されたユーザーの通貨残高を取得します",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "残高を取得（管理API）",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user123",
+                        "description": "ユーザーID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "APIキー",
+                        "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "残高取得成功",
+                        "schema": {
+                            "$ref": "#/definitions/handler.BalanceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "不正なリクエスト",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "認証エラー",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users/{user_id}/consume": {
+            "post": {
+                "description": "指定されたユーザーの通貨を消費します。優先順位制御も可能です",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "通貨を消費（管理API）",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user123",
+                        "description": "ユーザーID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "APIキー",
+                        "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "通貨消費リクエスト",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.ConsumeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "通貨消費成功",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ConsumeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "不正なリクエスト",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "認証エラー",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "残高不足",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users/{user_id}/grant": {
+            "post": {
+                "description": "指定されたユーザーに無償通貨を付与します",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "通貨を付与（管理API）",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user123",
+                        "description": "ユーザーID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "APIキー",
+                        "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "通貨付与リクエスト",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.GrantRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "通貨付与成功",
+                        "schema": {
+                            "$ref": "#/definitions/handler.GrantResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "不正なリクエスト",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "認証エラー",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users/{user_id}/issue_token": {
             "post": {
                 "description": "ユーザーIDを元にJWT認証トークンを生成します",
                 "consumes": [
@@ -25,18 +205,16 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "admin"
                 ],
                 "summary": "認証トークンを生成",
                 "parameters": [
                     {
-                        "description": "トークン生成リクエスト",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.GenerateTokenRequest"
-                        }
+                        "type": "string",
+                        "description": "ユーザーID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -48,6 +226,88 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "不正なリクエスト",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users/{user_id}/transactions": {
+            "get": {
+                "description": "指定されたユーザーのトランザクション履歴を取得します。ページネーションとフィルタリングに対応しています",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "トランザクション履歴を取得（管理API）",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user123",
+                        "description": "ユーザーID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "APIキー",
+                        "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "example": 50,
+                        "description": "取得件数（デフォルト: 50, 最大: 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "description": "オフセット（デフォルト: 0)",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "paid",
+                        "description": "通貨タイプでフィルタ（paid/free）",
+                        "name": "currency_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "consume",
+                        "description": "トランザクションタイプでフィルタ（grant/consume/payment/redemption）",
+                        "name": "transaction_type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "履歴取得成功",
+                        "schema": {
+                            "$ref": "#/definitions/handler.TransactionHistoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "不正なリクエスト",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "認証エラー",
                         "schema": {
                             "$ref": "#/definitions/handler.ErrorResponse"
                         }
@@ -112,6 +372,118 @@ const docTemplate = `{
                 }
             }
         },
+        "/me/balance": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "自分の通貨残高を取得します",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "currency"
+                ],
+                "summary": "残高を取得",
+                "responses": {
+                    "200": {
+                        "description": "残高取得成功",
+                        "schema": {
+                            "$ref": "#/definitions/handler.BalanceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "不正なリクエスト",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "認証エラー",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/me/transactions": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "自分のトランザクション履歴を取得します。ページネーションとフィルタリングに対応しています",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "history"
+                ],
+                "summary": "トランザクション履歴を取得",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "example": 50,
+                        "description": "取得件数（デフォルト: 50, 最大: 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "description": "オフセット（デフォルト: 0)",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "paid",
+                        "description": "通貨タイプでフィルタ（paid/free）",
+                        "name": "currency_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "consume",
+                        "description": "トランザクションタイプでフィルタ（grant/consume/payment/redemption）",
+                        "name": "transaction_type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "履歴取得成功",
+                        "schema": {
+                            "$ref": "#/definitions/handler.TransactionHistoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "不正なリクエスト",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "認証エラー",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/payment/process": {
             "post": {
                 "security": [
@@ -162,260 +534,6 @@ const docTemplate = `{
                     },
                     "409": {
                         "description": "残高不足",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/{user_id}/balance": {
-            "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "指定されたユーザーの通貨残高を取得します",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "currency"
-                ],
-                "summary": "残高を取得",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "example": "user123",
-                        "description": "ユーザーID",
-                        "name": "user_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "残高取得成功",
-                        "schema": {
-                            "$ref": "#/definitions/handler.BalanceResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "不正なリクエスト",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "認証エラー",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/{user_id}/consume": {
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "指定されたユーザーの通貨を消費します。優先順位制御も可能です",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "currency"
-                ],
-                "summary": "通貨を消費",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "example": "user123",
-                        "description": "ユーザーID",
-                        "name": "user_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "通貨消費リクエスト",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.ConsumeRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "通貨消費成功",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ConsumeResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "不正なリクエスト",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "認証エラー",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "残高不足",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/{user_id}/grant": {
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "指定されたユーザーに無償通貨を付与します",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "currency"
-                ],
-                "summary": "通貨を付与",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "example": "user123",
-                        "description": "ユーザーID",
-                        "name": "user_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "通貨付与リクエスト",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.GrantRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "通貨付与成功",
-                        "schema": {
-                            "$ref": "#/definitions/handler.GrantResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "不正なリクエスト",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "認証エラー",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/{user_id}/transactions": {
-            "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "指定されたユーザーのトランザクション履歴を取得します。ページネーションとフィルタリングに対応しています",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "history"
-                ],
-                "summary": "トランザクション履歴を取得",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "example": "user123",
-                        "description": "ユーザーID",
-                        "name": "user_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "default": 50,
-                        "example": 50,
-                        "description": "取得件数（デフォルト: 50, 最大: 100)",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 0,
-                        "example": 0,
-                        "description": "オフセット（デフォルト: 0)",
-                        "name": "offset",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "example": "paid",
-                        "description": "通貨タイプでフィルタ（paid/free）",
-                        "name": "currency_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "example": "consume",
-                        "description": "トランザクションタイプでフィルタ（grant/consume/payment/redemption）",
-                        "name": "transaction_type",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "履歴取得成功",
-                        "schema": {
-                            "$ref": "#/definitions/handler.TransactionHistoryResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "不正なリクエスト",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "認証エラー",
                         "schema": {
                             "$ref": "#/definitions/handler.ErrorResponse"
                         }
@@ -543,16 +661,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.GenerateTokenRequest": {
-            "description": "トークン生成リクエスト",
-            "type": "object",
-            "properties": {
-                "user_id": {
-                    "type": "string",
-                    "example": "user123"
-                }
-            }
-        },
         "handler.GenerateTokenResponse": {
             "description": "トークン生成レスポンス",
             "type": "object",
@@ -640,10 +748,6 @@ const docTemplate = `{
                 "payment_request_id": {
                     "type": "string",
                     "example": "req_123"
-                },
-                "user_id": {
-                    "type": "string",
-                    "example": "user123"
                 }
             }
         },
@@ -682,10 +786,6 @@ const docTemplate = `{
                 "code": {
                     "type": "string",
                     "example": "REDEEM123"
-                },
-                "user_id": {
-                    "type": "string",
-                    "example": "user123"
                 }
             }
         },

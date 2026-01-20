@@ -34,7 +34,7 @@ type ConsumeRequest struct {
 	CurrencyType string // "paid", "free", or "auto"
 	Amount       int64
 	ItemID       string
-	UsePriority  bool // 優先順位制御（無料通貨優先）
+	UsePriority  bool   // 優先順位制御（無料通貨優先）
 	Requester    string // リクエスト元（サービス名やユーザーIDなど）
 	Metadata     map[string]interface{}
 }

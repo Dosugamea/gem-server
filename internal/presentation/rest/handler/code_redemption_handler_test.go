@@ -252,7 +252,7 @@ func TestCodeRedemptionHandler_CreateCode(t *testing.T) {
 			},
 		},
 		{
-			name: "異常系: 無効なリクエストボディ",
+			name:        "異常系: 無効なリクエストボディ",
 			requestBody: nil,
 			setupMock: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtx *MockTransactionManager) {
 			},

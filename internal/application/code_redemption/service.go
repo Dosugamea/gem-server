@@ -267,7 +267,7 @@ func (s *CodeRedemptionApplicationService) CreateCode(ctx context.Context, req *
 	s.logger.Info(ctx, "Creating redemption code", map[string]interface{}{
 		"code":          req.Code,
 		"code_type":     req.CodeType,
-		"currency_type":  req.CurrencyType,
+		"currency_type": req.CurrencyType,
 		"amount":        req.Amount,
 		"max_uses":      req.MaxUses,
 		"valid_from":    req.ValidFrom,
@@ -353,7 +353,7 @@ func (s *CodeRedemptionApplicationService) CreateCode(ctx context.Context, req *
 	return &CreateCodeResponse{
 		Code:         rc.Code(),
 		CodeType:     rc.CodeType().String(),
-		CurrencyType:  rc.CurrencyType().String(),
+		CurrencyType: rc.CurrencyType().String(),
 		Amount:       rc.Amount(),
 		MaxUses:      rc.MaxUses(),
 		CurrentUses:  rc.CurrentUses(),

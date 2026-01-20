@@ -568,7 +568,7 @@ func TestCodeRedemptionApplicationService_CreateCode(t *testing.T) {
 			req: &CreateCodeRequest{
 				Code:         "NEWCODE123",
 				CodeType:     "promotion",
-				CurrencyType:  "paid",
+				CurrencyType: "paid",
 				Amount:       1000,
 				MaxUses:      100,
 				ValidFrom:    time.Now().Add(-24 * time.Hour),
@@ -596,7 +596,7 @@ func TestCodeRedemptionApplicationService_CreateCode(t *testing.T) {
 			req: &CreateCodeRequest{
 				Code:         "GIFTCODE456",
 				CodeType:     "gift",
-				CurrencyType:  "free",
+				CurrencyType: "free",
 				Amount:       500,
 				MaxUses:      0, // 無制限
 				ValidFrom:    time.Now(),
@@ -613,7 +613,7 @@ func TestCodeRedemptionApplicationService_CreateCode(t *testing.T) {
 			req: &CreateCodeRequest{
 				Code:         "",
 				CodeType:     "promotion",
-				CurrencyType:  "paid",
+				CurrencyType: "paid",
 				Amount:       1000,
 				MaxUses:      100,
 				ValidFrom:    time.Now(),
@@ -629,7 +629,7 @@ func TestCodeRedemptionApplicationService_CreateCode(t *testing.T) {
 			req: &CreateCodeRequest{
 				Code:         "INVALIDCODE",
 				CodeType:     "promotion",
-				CurrencyType:  "paid",
+				CurrencyType: "paid",
 				Amount:       1000,
 				MaxUses:      100,
 				ValidFrom:    time.Now().Add(24 * time.Hour),
@@ -645,7 +645,7 @@ func TestCodeRedemptionApplicationService_CreateCode(t *testing.T) {
 			req: &CreateCodeRequest{
 				Code:         "NEGATIVECODE",
 				CodeType:     "promotion",
-				CurrencyType:  "paid",
+				CurrencyType: "paid",
 				Amount:       -100,
 				MaxUses:      100,
 				ValidFrom:    time.Now(),
@@ -661,7 +661,7 @@ func TestCodeRedemptionApplicationService_CreateCode(t *testing.T) {
 			req: &CreateCodeRequest{
 				Code:         "INVALIDTYPECODE",
 				CodeType:     "invalid",
-				CurrencyType:  "paid",
+				CurrencyType: "paid",
 				Amount:       1000,
 				MaxUses:      100,
 				ValidFrom:    time.Now(),
@@ -677,7 +677,7 @@ func TestCodeRedemptionApplicationService_CreateCode(t *testing.T) {
 			req: &CreateCodeRequest{
 				Code:         "INVALIDCURRENCYCODE",
 				CodeType:     "promotion",
-				CurrencyType:  "invalid",
+				CurrencyType: "invalid",
 				Amount:       1000,
 				MaxUses:      100,
 				ValidFrom:    time.Now(),
@@ -693,7 +693,7 @@ func TestCodeRedemptionApplicationService_CreateCode(t *testing.T) {
 			req: &CreateCodeRequest{
 				Code:         "DUPLICATECODE",
 				CodeType:     "promotion",
-				CurrencyType:  "paid",
+				CurrencyType: "paid",
 				Amount:       1000,
 				MaxUses:      100,
 				ValidFrom:    time.Now(),
@@ -714,7 +714,7 @@ func TestCodeRedemptionApplicationService_CreateCode(t *testing.T) {
 			req: &CreateCodeRequest{
 				Code:         "ERRORCODE",
 				CodeType:     "promotion",
-				CurrencyType:  "paid",
+				CurrencyType: "paid",
 				Amount:       1000,
 				MaxUses:      100,
 				ValidFrom:    time.Now(),

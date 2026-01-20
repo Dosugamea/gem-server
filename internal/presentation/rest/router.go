@@ -133,7 +133,7 @@ func setupRoutes(
 	adminAPI.POST("/users/:user_id/consume", currencyHandler.ConsumeCurrency)
 	adminAPI.GET("/users/:user_id/balance", currencyHandler.GetBalanceAdmin)
 	adminAPI.GET("/users/:user_id/transactions", historyHandler.GetTransactionHistoryAdmin)
-	
+
 	// 引き換えコード管理API
 	adminAPI.POST("/codes", redemptionHandler.CreateCode)
 	adminAPI.DELETE("/codes/:code", redemptionHandler.DeleteCode)

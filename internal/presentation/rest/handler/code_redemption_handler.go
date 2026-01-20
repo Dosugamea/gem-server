@@ -146,9 +146,9 @@ type GetCodeResponse struct {
 // @Description 引き換えコード一覧取得レスポンス
 type ListCodesResponse struct {
 	Codes  []CodeItem `json:"codes"`
-	Total  int         `json:"total" example:"100"`
-	Limit  int         `json:"limit" example:"50"`
-	Offset int         `json:"offset" example:"0"`
+	Total  int        `json:"total" example:"100"`
+	Limit  int        `json:"limit" example:"50"`
+	Offset int        `json:"offset" example:"0"`
 }
 
 // CodeItem 引き換えコードアイテム
@@ -230,7 +230,7 @@ func (h *CodeRedemptionHandler) CreateCode(c echo.Context) error {
 		Code:         resp.Code,
 		CodeType:     resp.CodeType,
 		CurrencyType: resp.CurrencyType,
-		Amount:        strconv.FormatInt(resp.Amount, 10),
+		Amount:       strconv.FormatInt(resp.Amount, 10),
 		MaxUses:      resp.MaxUses,
 		CurrentUses:  resp.CurrentUses,
 		ValidFrom:    resp.ValidFrom.Format(time.RFC3339),
@@ -359,10 +359,10 @@ func (h *CodeRedemptionHandler) ListCodes(c echo.Context) error {
 	codeType := c.QueryParam("code_type")
 
 	req := &redemptionapp.ListCodesRequest{
-		Limit:      limit,
-		Offset:     offset,
-		Status:     status,
-		CodeType:   codeType,
+		Limit:    limit,
+		Offset:   offset,
+		Status:   status,
+		CodeType: codeType,
 	}
 
 	resp, err := h.redemptionService.ListCodes(c.Request().Context(), req)

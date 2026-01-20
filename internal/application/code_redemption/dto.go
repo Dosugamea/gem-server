@@ -25,14 +25,14 @@ type RedeemCodeResponse struct {
 
 // CreateCodeRequest 引き換えコード作成リクエスト
 type CreateCodeRequest struct {
-	Code        string
-	CodeType    string
+	Code         string
+	CodeType     string
 	CurrencyType string
-	Amount      int64
-	MaxUses     int
-	ValidFrom   time.Time
-	ValidUntil  time.Time
-	Metadata    map[string]interface{}
+	Amount       int64
+	MaxUses      int
+	ValidFrom    time.Time
+	ValidUntil   time.Time
+	Metadata     map[string]interface{}
 }
 
 // CreateCodeResponse 引き換えコード作成レスポンス
@@ -84,10 +84,10 @@ type GetCodeResponse struct {
 
 // ListCodesRequest 引き換えコード一覧取得リクエスト
 type ListCodesRequest struct {
-	Limit       int
-	Offset      int
-	Status      string // optional: "active", "expired", "disabled"
-	CodeType    string // optional: "promotion", "gift", "event"
+	Limit    int
+	Offset   int
+	Status   string // optional: "active", "expired", "disabled"
+	CodeType string // optional: "promotion", "gift", "event"
 }
 
 // ListCodesResponse 引き換えコード一覧取得レスポンス

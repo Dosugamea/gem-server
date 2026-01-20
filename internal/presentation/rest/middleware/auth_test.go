@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
@@ -18,6 +19,7 @@ import (
 func TestAuthMiddleware_MissingAuthorizationHeader(t *testing.T) {
 	cfg := &config.JWTConfig{
 		Secret: "test-secret",
+		Issuer: "test-issuer",
 	}
 	tracer := noop.NewTracerProvider().Tracer("test")
 	logger := otelinfra.NewLogger(tracer)
@@ -40,6 +42,7 @@ func TestAuthMiddleware_MissingAuthorizationHeader(t *testing.T) {
 func TestAuthMiddleware_InvalidAuthorizationHeaderFormat(t *testing.T) {
 	cfg := &config.JWTConfig{
 		Secret: "test-secret",
+		Issuer: "test-issuer",
 	}
 	tracer := noop.NewTracerProvider().Tracer("test")
 	logger := otelinfra.NewLogger(tracer)
@@ -63,6 +66,7 @@ func TestAuthMiddleware_InvalidAuthorizationHeaderFormat(t *testing.T) {
 func TestAuthMiddleware_InvalidToken(t *testing.T) {
 	cfg := &config.JWTConfig{
 		Secret: "test-secret",
+		Issuer: "test-issuer",
 	}
 	tracer := noop.NewTracerProvider().Tracer("test")
 	logger := otelinfra.NewLogger(tracer)
@@ -86,6 +90,7 @@ func TestAuthMiddleware_InvalidToken(t *testing.T) {
 func TestAuthMiddleware_ValidToken(t *testing.T) {
 	cfg := &config.JWTConfig{
 		Secret: "test-secret",
+		Issuer: "test-issuer",
 	}
 	tracer := noop.NewTracerProvider().Tracer("test")
 	logger := otelinfra.NewLogger(tracer)
@@ -93,6 +98,8 @@ func TestAuthMiddleware_ValidToken(t *testing.T) {
 	// 有効なJWTトークンを生成
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": "user123",
+		"iss":     "test-issuer",
+		"exp":     time.Now().Add(time.Hour).Unix(),
 	})
 	tokenString, err := token.SignedString([]byte(cfg.Secret))
 	require.NoError(t, err)
@@ -120,6 +127,7 @@ func TestAuthMiddleware_ValidToken(t *testing.T) {
 func TestAuthMiddleware_MissingUserIDInClaims(t *testing.T) {
 	cfg := &config.JWTConfig{
 		Secret: "test-secret",
+		Issuer: "test-issuer",
 	}
 	tracer := noop.NewTracerProvider().Tracer("test")
 	logger := otelinfra.NewLogger(tracer)
@@ -127,6 +135,8 @@ func TestAuthMiddleware_MissingUserIDInClaims(t *testing.T) {
 	// user_idがないトークンを生成
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"other_claim": "value",
+		"iss":         "test-issuer",
+		"exp":         time.Now().Add(time.Hour).Unix(),
 	})
 	tokenString, err := token.SignedString([]byte(cfg.Secret))
 	require.NoError(t, err)
@@ -150,6 +160,7 @@ func TestAuthMiddleware_MissingUserIDInClaims(t *testing.T) {
 func TestAuthMiddleware_InvalidUserIDType(t *testing.T) {
 	cfg := &config.JWTConfig{
 		Secret: "test-secret",
+		Issuer: "test-issuer",
 	}
 	tracer := noop.NewTracerProvider().Tracer("test")
 	logger := otelinfra.NewLogger(tracer)
@@ -157,6 +168,8 @@ func TestAuthMiddleware_InvalidUserIDType(t *testing.T) {
 	// user_idが文字列でないトークンを生成
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": 123, // 数値型
+		"iss":     "test-issuer",
+		"exp":     time.Now().Add(time.Hour).Unix(),
 	})
 	tokenString, err := token.SignedString([]byte(cfg.Secret))
 	require.NoError(t, err)
@@ -180,6 +193,7 @@ func TestAuthMiddleware_InvalidUserIDType(t *testing.T) {
 func TestAuthMiddleware_WrongSecret(t *testing.T) {
 	cfg := &config.JWTConfig{
 		Secret: "test-secret",
+		Issuer: "test-issuer",
 	}
 	tracer := noop.NewTracerProvider().Tracer("test")
 	logger := otelinfra.NewLogger(tracer)
@@ -187,6 +201,8 @@ func TestAuthMiddleware_WrongSecret(t *testing.T) {
 	// 異なるシークレットでトークンを生成
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": "user123",
+		"iss":     "test-issuer",
+		"exp":     time.Now().Add(time.Hour).Unix(),
 	})
 	tokenString, err := token.SignedString([]byte("wrong-secret"))
 	require.NoError(t, err)
@@ -210,15 +226,22 @@ func TestAuthMiddleware_WrongSecret(t *testing.T) {
 func TestAuthMiddleware_ExpiredToken(t *testing.T) {
 	cfg := &config.JWTConfig{
 		Secret: "test-secret",
+		Issuer: "test-issuer",
 	}
 	tracer := noop.NewTracerProvider().Tracer("test")
 	logger := otelinfra.NewLogger(tracer)
 
-	// 期限切れトークンを生成（実際にはexpクレームを設定する必要があるが、簡易的に無効なトークンを使用）
-	// 実際の実装では、expクレームを過去の時刻に設定する必要がある
-	// ここでは、無効なトークンを使用してテスト
+	// 期限切れトークンを生成
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": "user123",
+		"iss":     "test-issuer",
+		"exp":     time.Now().Add(-time.Hour).Unix(), // 1時間前に期限切れ
+	})
+	tokenString, err := token.SignedString([]byte(cfg.Secret))
+	require.NoError(t, err)
+
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("Authorization", "Bearer expired.token.here")
+	req.Header.Set("Authorization", "Bearer "+tokenString)
 	rec := httptest.NewRecorder()
 
 	e := echo.New()
@@ -229,7 +252,7 @@ func TestAuthMiddleware_ExpiredToken(t *testing.T) {
 		return c.String(http.StatusOK, "ok")
 	})
 
-	err := handler(c)
+	err = handler(c)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 }

@@ -5,6 +5,7 @@ import (
 
 	"gem-server/internal/infrastructure/config"
 	otelinfra "gem-server/internal/infrastructure/observability/otel"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
@@ -44,7 +45,9 @@ func AuthMiddleware(cfg *config.JWTConfig, logger *otelinfra.Logger) echo.Middle
 					return nil, jwt.ErrSignatureInvalid
 				}
 				return []byte(cfg.Secret), nil
-			})
+			}, jwt.WithValidMethods([]string{"HS256"}), // アルゴリズムの明示的な指定
+				jwt.WithExpirationRequired(), // expクレームを必須に
+				jwt.WithIssuer(cfg.Issuer))   // issクレームの検証
 
 			if err != nil || !token.Valid {
 				logger.Warn(ctx, "Invalid token", map[string]interface{}{

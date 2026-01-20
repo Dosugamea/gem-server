@@ -141,6 +141,26 @@ func handleError(c echo.Context, err error, logger *otelinfra.Logger) error {
 		})
 	}
 
+	if errors.Is(err, redemption_code.ErrCodeAlreadyExists) {
+		logger.Warn(ctx, "Code already exists", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return c.JSON(http.StatusConflict, ErrorResponse{
+			Error:   "code_already_exists",
+			Message: err.Error(),
+		})
+	}
+
+	if errors.Is(err, redemption_code.ErrCodeCannotBeDeleted) {
+		logger.Warn(ctx, "Code cannot be deleted", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return c.JSON(http.StatusConflict, ErrorResponse{
+			Error:   "code_cannot_be_deleted",
+			Message: err.Error(),
+		})
+	}
+
 	// EchoのHTTPエラー
 	var httpErr *echo.HTTPError
 	if errors.As(err, &httpErr) {

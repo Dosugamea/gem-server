@@ -17,4 +17,8 @@ var (
 	ErrUserAlreadyRedeemed = errors.New("user already redeemed")
 	// ErrCodeNotRedeemable 引き換え不可能なコードエラー
 	ErrCodeNotRedeemable = errors.New("code not redeemable")
+	// ErrCodeAlreadyExists 引き換えコードが既に存在するエラー
+	ErrCodeAlreadyExists = errors.New("code already exists")
+	// ErrCodeCannotBeDeleted 引き換えコードが削除できないエラー（使用済みのため）
+	ErrCodeCannotBeDeleted = errors.New("code cannot be deleted because it has been used")
 )

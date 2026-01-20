@@ -146,6 +146,24 @@ func (m *MockRedemptionCodeRepository) SaveRedemption(ctx context.Context, redem
 	return args.Error(0)
 }
 
+func (m *MockRedemptionCodeRepository) Create(ctx context.Context, code *redemption_code.RedemptionCode) error {
+	args := m.Called(ctx, code)
+	return args.Error(0)
+}
+
+func (m *MockRedemptionCodeRepository) Delete(ctx context.Context, code string) error {
+	args := m.Called(ctx, code)
+	return args.Error(0)
+}
+
+func (m *MockRedemptionCodeRepository) FindAll(ctx context.Context, limit, offset int) ([]*redemption_code.RedemptionCode, int, error) {
+	args := m.Called(ctx, limit, offset)
+	if args.Get(0) == nil {
+		return nil, args.Int(1), args.Error(2)
+	}
+	return args.Get(0).([]*redemption_code.RedemptionCode), args.Int(1), args.Error(2)
+}
+
 func setupTestServer(t *testing.T) (*Server, *MockCurrencyRepository, *MockTransactionRepository, *MockPaymentRequestRepository, *MockTransactionManager, *MockRedemptionCodeRepository) {
 	t.Helper()
 

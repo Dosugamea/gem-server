@@ -102,6 +102,24 @@ func (m *MockRedemptionCodeRepository) SaveRedemption(ctx context.Context, redem
 	return args.Error(0)
 }
 
+func (m *MockRedemptionCodeRepository) Create(ctx context.Context, code *redemption_code.RedemptionCode) error {
+	args := m.Called(ctx, code)
+	return args.Error(0)
+}
+
+func (m *MockRedemptionCodeRepository) Delete(ctx context.Context, code string) error {
+	args := m.Called(ctx, code)
+	return args.Error(0)
+}
+
+func (m *MockRedemptionCodeRepository) FindAll(ctx context.Context, limit, offset int) ([]*redemption_code.RedemptionCode, int, error) {
+	args := m.Called(ctx, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*redemption_code.RedemptionCode), args.Int(1), args.Error(2)
+}
+
 // MockTransactionManager モックトランザクションマネージャー
 type MockTransactionManager struct {
 	mock.Mock
@@ -519,6 +537,748 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 
 			ctx := context.Background()
 			got, err := svc.Redeem(ctx, tt.req)
+
+			if tt.wantError {
+				assert.Error(t, err)
+				if tt.checkFunc != nil {
+					tt.checkFunc(t, got, err)
+				}
+			} else {
+				if tt.checkFunc != nil {
+					tt.checkFunc(t, got, err)
+				} else {
+					require.NoError(t, err)
+					assert.NotNil(t, got)
+				}
+			}
+		})
+	}
+}
+
+func TestCodeRedemptionApplicationService_CreateCode(t *testing.T) {
+	tests := []struct {
+		name       string
+		req        *CreateCodeRequest
+		setupMocks func(*MockCurrencyRepository, *MockTransactionRepository, *MockRedemptionCodeRepository, *MockTransactionManager)
+		wantError  bool
+		checkFunc  func(*testing.T, *CreateCodeResponse, error)
+	}{
+		{
+			name: "正常系: コードを作成",
+			req: &CreateCodeRequest{
+				Code:         "NEWCODE123",
+				CodeType:     "promotion",
+				CurrencyType:  "paid",
+				Amount:       1000,
+				MaxUses:      100,
+				ValidFrom:    time.Now().Add(-24 * time.Hour),
+				ValidUntil:   time.Now().Add(24 * time.Hour),
+				Metadata:     map[string]interface{}{"campaign_id": "campaign_001"},
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				mrcr.On("Create", mock.Anything, mock.AnythingOfType("*redemption_code.RedemptionCode")).Return(nil)
+			},
+			wantError: false,
+			checkFunc: func(t *testing.T, resp *CreateCodeResponse, err error) {
+				require.NoError(t, err)
+				assert.NotNil(t, resp)
+				assert.Equal(t, "NEWCODE123", resp.Code)
+				assert.Equal(t, "promotion", resp.CodeType)
+				assert.Equal(t, "paid", resp.CurrencyType)
+				assert.Equal(t, int64(1000), resp.Amount)
+				assert.Equal(t, 100, resp.MaxUses)
+				assert.Equal(t, 0, resp.CurrentUses)
+				assert.Equal(t, "active", resp.Status)
+			},
+		},
+		{
+			name: "正常系: メタデータなしでコードを作成",
+			req: &CreateCodeRequest{
+				Code:         "GIFTCODE456",
+				CodeType:     "gift",
+				CurrencyType:  "free",
+				Amount:       500,
+				MaxUses:      0, // 無制限
+				ValidFrom:    time.Now(),
+				ValidUntil:   time.Now().Add(7 * 24 * time.Hour),
+				Metadata:     nil,
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				mrcr.On("Create", mock.Anything, mock.AnythingOfType("*redemption_code.RedemptionCode")).Return(nil)
+			},
+			wantError: false,
+		},
+		{
+			name: "異常系: コードが空",
+			req: &CreateCodeRequest{
+				Code:         "",
+				CodeType:     "promotion",
+				CurrencyType:  "paid",
+				Amount:       1000,
+				MaxUses:      100,
+				ValidFrom:    time.Now(),
+				ValidUntil:   time.Now().Add(24 * time.Hour),
+				Metadata:     nil,
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+			},
+			wantError: true,
+		},
+		{
+			name: "異常系: 有効期限が開始日より前",
+			req: &CreateCodeRequest{
+				Code:         "INVALIDCODE",
+				CodeType:     "promotion",
+				CurrencyType:  "paid",
+				Amount:       1000,
+				MaxUses:      100,
+				ValidFrom:    time.Now().Add(24 * time.Hour),
+				ValidUntil:   time.Now(), // 開始日より前
+				Metadata:     nil,
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+			},
+			wantError: true,
+		},
+		{
+			name: "異常系: 金額が負の値",
+			req: &CreateCodeRequest{
+				Code:         "NEGATIVECODE",
+				CodeType:     "promotion",
+				CurrencyType:  "paid",
+				Amount:       -100,
+				MaxUses:      100,
+				ValidFrom:    time.Now(),
+				ValidUntil:   time.Now().Add(24 * time.Hour),
+				Metadata:     nil,
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+			},
+			wantError: true,
+		},
+		{
+			name: "異常系: 無効なコードタイプ",
+			req: &CreateCodeRequest{
+				Code:         "INVALIDTYPECODE",
+				CodeType:     "invalid",
+				CurrencyType:  "paid",
+				Amount:       1000,
+				MaxUses:      100,
+				ValidFrom:    time.Now(),
+				ValidUntil:   time.Now().Add(24 * time.Hour),
+				Metadata:     nil,
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+			},
+			wantError: true,
+		},
+		{
+			name: "異常系: 無効な通貨タイプ",
+			req: &CreateCodeRequest{
+				Code:         "INVALIDCURRENCYCODE",
+				CodeType:     "promotion",
+				CurrencyType:  "invalid",
+				Amount:       1000,
+				MaxUses:      100,
+				ValidFrom:    time.Now(),
+				ValidUntil:   time.Now().Add(24 * time.Hour),
+				Metadata:     nil,
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+			},
+			wantError: true,
+		},
+		{
+			name: "異常系: コードが既に存在",
+			req: &CreateCodeRequest{
+				Code:         "DUPLICATECODE",
+				CodeType:     "promotion",
+				CurrencyType:  "paid",
+				Amount:       1000,
+				MaxUses:      100,
+				ValidFrom:    time.Now(),
+				ValidUntil:   time.Now().Add(24 * time.Hour),
+				Metadata:     nil,
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				mrcr.On("Create", mock.Anything, mock.AnythingOfType("*redemption_code.RedemptionCode")).Return(redemption_code.ErrCodeAlreadyExists)
+			},
+			wantError: true,
+			checkFunc: func(t *testing.T, resp *CreateCodeResponse, err error) {
+				assert.Error(t, err)
+				assert.Equal(t, redemption_code.ErrCodeAlreadyExists, err)
+			},
+		},
+		{
+			name: "異常系: DBエラー",
+			req: &CreateCodeRequest{
+				Code:         "ERRORCODE",
+				CodeType:     "promotion",
+				CurrencyType:  "paid",
+				Amount:       1000,
+				MaxUses:      100,
+				ValidFrom:    time.Now(),
+				ValidUntil:   time.Now().Add(24 * time.Hour),
+				Metadata:     nil,
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				mrcr.On("Create", mock.Anything, mock.AnythingOfType("*redemption_code.RedemptionCode")).Return(sql.ErrConnDone)
+			},
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCurrencyRepo := new(MockCurrencyRepository)
+			mockTransactionRepo := new(MockTransactionRepository)
+			mockRedemptionCodeRepo := new(MockRedemptionCodeRepository)
+			mockTxManager := new(MockTransactionManager)
+
+			tt.setupMocks(mockCurrencyRepo, mockTransactionRepo, mockRedemptionCodeRepo, mockTxManager)
+
+			tracer := otel.Tracer("test")
+			logger := otelinfra.NewLogger(tracer)
+			metrics, err := otelinfra.NewMetrics("test")
+			require.NoError(t, err)
+
+			svc := NewCodeRedemptionApplicationService(
+				mockCurrencyRepo,
+				mockTransactionRepo,
+				mockRedemptionCodeRepo,
+				mockTxManager,
+				logger,
+				metrics,
+			)
+
+			ctx := context.Background()
+			got, err := svc.CreateCode(ctx, tt.req)
+
+			if tt.wantError {
+				assert.Error(t, err)
+				if tt.checkFunc != nil {
+					tt.checkFunc(t, got, err)
+				}
+			} else {
+				if tt.checkFunc != nil {
+					tt.checkFunc(t, got, err)
+				} else {
+					require.NoError(t, err)
+					assert.NotNil(t, got)
+				}
+			}
+		})
+	}
+}
+
+func TestCodeRedemptionApplicationService_DeleteCode(t *testing.T) {
+	tests := []struct {
+		name       string
+		req        *DeleteCodeRequest
+		setupMocks func(*MockCurrencyRepository, *MockTransactionRepository, *MockRedemptionCodeRepository, *MockTransactionManager)
+		wantError  bool
+		checkFunc  func(*testing.T, *DeleteCodeResponse, error)
+	}{
+		{
+			name: "正常系: コードを削除",
+			req: &DeleteCodeRequest{
+				Code: "DELETECODE123",
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				code := redemption_code.NewRedemptionCode(
+					"DELETECODE123",
+					redemption_code.CodeTypePromotion,
+					currency.CurrencyTypePaid,
+					1000,
+					1,
+					time.Now().Add(-24*time.Hour),
+					time.Now().Add(24*time.Hour),
+					map[string]interface{}{},
+				)
+				mrcr.On("FindByCode", mock.Anything, "DELETECODE123").Return(code, nil)
+				mrcr.On("Delete", mock.Anything, "DELETECODE123").Return(nil)
+			},
+			wantError: false,
+			checkFunc: func(t *testing.T, resp *DeleteCodeResponse, err error) {
+				require.NoError(t, err)
+				assert.NotNil(t, resp)
+				assert.Equal(t, "DELETECODE123", resp.Code)
+				assert.False(t, resp.DeletedAt.IsZero())
+			},
+		},
+		{
+			name: "異常系: コードが空",
+			req: &DeleteCodeRequest{
+				Code: "",
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+			},
+			wantError: true,
+		},
+		{
+			name: "異常系: コードが見つからない",
+			req: &DeleteCodeRequest{
+				Code: "NOTFOUNDCODE",
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				mrcr.On("FindByCode", mock.Anything, "NOTFOUNDCODE").Return(nil, redemption_code.ErrCodeNotFound)
+			},
+			wantError: true,
+			checkFunc: func(t *testing.T, resp *DeleteCodeResponse, err error) {
+				assert.Error(t, err)
+				assert.Equal(t, redemption_code.ErrCodeNotFound, err)
+			},
+		},
+		{
+			name: "異常系: コードが使用済み（削除不可）",
+			req: &DeleteCodeRequest{
+				Code: "USEDCODE",
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				code := redemption_code.NewRedemptionCode(
+					"USEDCODE",
+					redemption_code.CodeTypePromotion,
+					currency.CurrencyTypePaid,
+					1000,
+					1,
+					time.Now().Add(-24*time.Hour),
+					time.Now().Add(24*time.Hour),
+					map[string]interface{}{},
+				)
+				mrcr.On("FindByCode", mock.Anything, "USEDCODE").Return(code, nil)
+				mrcr.On("Delete", mock.Anything, "USEDCODE").Return(redemption_code.ErrCodeCannotBeDeleted)
+			},
+			wantError: true,
+			checkFunc: func(t *testing.T, resp *DeleteCodeResponse, err error) {
+				assert.Error(t, err)
+				assert.Equal(t, redemption_code.ErrCodeCannotBeDeleted, err)
+			},
+		},
+		{
+			name: "異常系: DBエラー",
+			req: &DeleteCodeRequest{
+				Code: "ERRORCODE",
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				mrcr.On("FindByCode", mock.Anything, "ERRORCODE").Return(nil, sql.ErrConnDone)
+			},
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCurrencyRepo := new(MockCurrencyRepository)
+			mockTransactionRepo := new(MockTransactionRepository)
+			mockRedemptionCodeRepo := new(MockRedemptionCodeRepository)
+			mockTxManager := new(MockTransactionManager)
+
+			tt.setupMocks(mockCurrencyRepo, mockTransactionRepo, mockRedemptionCodeRepo, mockTxManager)
+
+			tracer := otel.Tracer("test")
+			logger := otelinfra.NewLogger(tracer)
+			metrics, err := otelinfra.NewMetrics("test")
+			require.NoError(t, err)
+
+			svc := NewCodeRedemptionApplicationService(
+				mockCurrencyRepo,
+				mockTransactionRepo,
+				mockRedemptionCodeRepo,
+				mockTxManager,
+				logger,
+				metrics,
+			)
+
+			ctx := context.Background()
+			got, err := svc.DeleteCode(ctx, tt.req)
+
+			if tt.wantError {
+				assert.Error(t, err)
+				if tt.checkFunc != nil {
+					tt.checkFunc(t, got, err)
+				}
+			} else {
+				if tt.checkFunc != nil {
+					tt.checkFunc(t, got, err)
+				} else {
+					require.NoError(t, err)
+					assert.NotNil(t, got)
+				}
+			}
+		})
+	}
+}
+
+func TestCodeRedemptionApplicationService_GetCode(t *testing.T) {
+	tests := []struct {
+		name       string
+		req        *GetCodeRequest
+		setupMocks func(*MockCurrencyRepository, *MockTransactionRepository, *MockRedemptionCodeRepository, *MockTransactionManager)
+		wantError  bool
+		checkFunc  func(*testing.T, *GetCodeResponse, error)
+	}{
+		{
+			name: "正常系: コードを取得",
+			req: &GetCodeRequest{
+				Code: "GETCODE123",
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				code := redemption_code.NewRedemptionCode(
+					"GETCODE123",
+					redemption_code.CodeTypePromotion,
+					currency.CurrencyTypePaid,
+					1000,
+					100,
+					time.Now().Add(-24*time.Hour),
+					time.Now().Add(24*time.Hour),
+					map[string]interface{}{"campaign_id": "campaign_001"},
+				)
+				code.SetCurrentUses(5)
+				mrcr.On("FindByCode", mock.Anything, "GETCODE123").Return(code, nil)
+			},
+			wantError: false,
+			checkFunc: func(t *testing.T, resp *GetCodeResponse, err error) {
+				require.NoError(t, err)
+				assert.NotNil(t, resp)
+				assert.Equal(t, "GETCODE123", resp.Code)
+				assert.Equal(t, "promotion", resp.CodeType)
+				assert.Equal(t, "paid", resp.CurrencyType)
+				assert.Equal(t, int64(1000), resp.Amount)
+				assert.Equal(t, 100, resp.MaxUses)
+				assert.Equal(t, 5, resp.CurrentUses)
+			},
+		},
+		{
+			name: "異常系: コードが空",
+			req: &GetCodeRequest{
+				Code: "",
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+			},
+			wantError: true,
+		},
+		{
+			name: "異常系: コードが見つからない",
+			req: &GetCodeRequest{
+				Code: "NOTFOUNDCODE",
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				mrcr.On("FindByCode", mock.Anything, "NOTFOUNDCODE").Return(nil, redemption_code.ErrCodeNotFound)
+			},
+			wantError: true,
+			checkFunc: func(t *testing.T, resp *GetCodeResponse, err error) {
+				assert.Error(t, err)
+				assert.Equal(t, redemption_code.ErrCodeNotFound, err)
+			},
+		},
+		{
+			name: "異常系: DBエラー",
+			req: &GetCodeRequest{
+				Code: "ERRORCODE",
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				mrcr.On("FindByCode", mock.Anything, "ERRORCODE").Return(nil, sql.ErrConnDone)
+			},
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCurrencyRepo := new(MockCurrencyRepository)
+			mockTransactionRepo := new(MockTransactionRepository)
+			mockRedemptionCodeRepo := new(MockRedemptionCodeRepository)
+			mockTxManager := new(MockTransactionManager)
+
+			tt.setupMocks(mockCurrencyRepo, mockTransactionRepo, mockRedemptionCodeRepo, mockTxManager)
+
+			tracer := otel.Tracer("test")
+			logger := otelinfra.NewLogger(tracer)
+			metrics, err := otelinfra.NewMetrics("test")
+			require.NoError(t, err)
+
+			svc := NewCodeRedemptionApplicationService(
+				mockCurrencyRepo,
+				mockTransactionRepo,
+				mockRedemptionCodeRepo,
+				mockTxManager,
+				logger,
+				metrics,
+			)
+
+			ctx := context.Background()
+			got, err := svc.GetCode(ctx, tt.req)
+
+			if tt.wantError {
+				assert.Error(t, err)
+				if tt.checkFunc != nil {
+					tt.checkFunc(t, got, err)
+				}
+			} else {
+				if tt.checkFunc != nil {
+					tt.checkFunc(t, got, err)
+				} else {
+					require.NoError(t, err)
+					assert.NotNil(t, got)
+				}
+			}
+		})
+	}
+}
+
+func TestCodeRedemptionApplicationService_ListCodes(t *testing.T) {
+	tests := []struct {
+		name       string
+		req        *ListCodesRequest
+		setupMocks func(*MockCurrencyRepository, *MockTransactionRepository, *MockRedemptionCodeRepository, *MockTransactionManager)
+		wantError  bool
+		checkFunc  func(*testing.T, *ListCodesResponse, error)
+	}{
+		{
+			name: "正常系: コード一覧を取得",
+			req: &ListCodesRequest{
+				Limit:  10,
+				Offset: 0,
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				codes := []*redemption_code.RedemptionCode{
+					redemption_code.NewRedemptionCode(
+						"CODE1",
+						redemption_code.CodeTypePromotion,
+						currency.CurrencyTypePaid,
+						1000,
+						100,
+						time.Now().Add(-24*time.Hour),
+						time.Now().Add(24*time.Hour),
+						map[string]interface{}{},
+					),
+					redemption_code.NewRedemptionCode(
+						"CODE2",
+						redemption_code.CodeTypeGift,
+						currency.CurrencyTypeFree,
+						500,
+						0,
+						time.Now().Add(-12*time.Hour),
+						time.Now().Add(12*time.Hour),
+						map[string]interface{}{},
+					),
+				}
+				mrcr.On("FindAll", mock.Anything, 10, 0).Return(codes, 25, nil)
+			},
+			wantError: false,
+			checkFunc: func(t *testing.T, resp *ListCodesResponse, err error) {
+				require.NoError(t, err)
+				assert.NotNil(t, resp)
+				assert.Equal(t, 2, len(resp.Codes))
+				assert.Equal(t, 25, resp.Total)
+				assert.Equal(t, 10, resp.Limit)
+				assert.Equal(t, 0, resp.Offset)
+			},
+		},
+		{
+			name: "正常系: フィルタリング（status=active）",
+			req: &ListCodesRequest{
+				Limit:  10,
+				Offset: 0,
+				Status: "active",
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				codes := []*redemption_code.RedemptionCode{
+					redemption_code.NewRedemptionCode(
+						"ACTIVECODE",
+						redemption_code.CodeTypePromotion,
+						currency.CurrencyTypePaid,
+						1000,
+						100,
+						time.Now().Add(-24*time.Hour),
+						time.Now().Add(24*time.Hour),
+						map[string]interface{}{},
+					),
+					redemption_code.NewRedemptionCode(
+						"EXPIREDCODE",
+						redemption_code.CodeTypePromotion,
+						currency.CurrencyTypePaid,
+						1000,
+						100,
+						time.Now().Add(-48*time.Hour),
+						time.Now().Add(-24*time.Hour),
+						map[string]interface{}{},
+					),
+				}
+				status, _ := redemption_code.NewCodeStatus("expired")
+				codes[1].SetStatus(status)
+				mrcr.On("FindAll", mock.Anything, 10, 0).Return(codes, 2, nil)
+			},
+			wantError: false,
+			checkFunc: func(t *testing.T, resp *ListCodesResponse, err error) {
+				require.NoError(t, err)
+				assert.NotNil(t, resp)
+				// activeのみがフィルタリングされる
+				assert.Equal(t, 1, len(resp.Codes))
+				assert.Equal(t, "ACTIVECODE", resp.Codes[0].Code())
+			},
+		},
+		{
+			name: "正常系: フィルタリング（code_type=promotion）",
+			req: &ListCodesRequest{
+				Limit:    10,
+				Offset:   0,
+				CodeType: "promotion",
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				codes := []*redemption_code.RedemptionCode{
+					redemption_code.NewRedemptionCode(
+						"PROMOCODE",
+						redemption_code.CodeTypePromotion,
+						currency.CurrencyTypePaid,
+						1000,
+						100,
+						time.Now().Add(-24*time.Hour),
+						time.Now().Add(24*time.Hour),
+						map[string]interface{}{},
+					),
+					redemption_code.NewRedemptionCode(
+						"GIFTCODE",
+						redemption_code.CodeTypeGift,
+						currency.CurrencyTypeFree,
+						500,
+						0,
+						time.Now().Add(-12*time.Hour),
+						time.Now().Add(12*time.Hour),
+						map[string]interface{}{},
+					),
+				}
+				mrcr.On("FindAll", mock.Anything, 10, 0).Return(codes, 2, nil)
+			},
+			wantError: false,
+			checkFunc: func(t *testing.T, resp *ListCodesResponse, err error) {
+				require.NoError(t, err)
+				assert.NotNil(t, resp)
+				// promotionのみがフィルタリングされる
+				assert.Equal(t, 1, len(resp.Codes))
+				assert.Equal(t, "PROMOCODE", resp.Codes[0].Code())
+			},
+		},
+		{
+			name: "正常系: ページネーション（limit/offset）",
+			req: &ListCodesRequest{
+				Limit:  5,
+				Offset: 10,
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				codes := []*redemption_code.RedemptionCode{
+					redemption_code.NewRedemptionCode(
+						"CODE11",
+						redemption_code.CodeTypePromotion,
+						currency.CurrencyTypePaid,
+						1000,
+						100,
+						time.Now(),
+						time.Now().Add(24*time.Hour),
+						map[string]interface{}{},
+					),
+				}
+				mrcr.On("FindAll", mock.Anything, 5, 10).Return(codes, 20, nil)
+			},
+			wantError: false,
+			checkFunc: func(t *testing.T, resp *ListCodesResponse, err error) {
+				require.NoError(t, err)
+				assert.NotNil(t, resp)
+				assert.Equal(t, 1, len(resp.Codes))
+				assert.Equal(t, 20, resp.Total)
+				assert.Equal(t, 5, resp.Limit)
+				assert.Equal(t, 10, resp.Offset)
+			},
+		},
+		{
+			name: "正常系: limitが0以下の場合、デフォルト値50を使用",
+			req: &ListCodesRequest{
+				Limit:  0,
+				Offset: 0,
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				codes := []*redemption_code.RedemptionCode{}
+				mrcr.On("FindAll", mock.Anything, 50, 0).Return(codes, 0, nil)
+			},
+			wantError: false,
+			checkFunc: func(t *testing.T, resp *ListCodesResponse, err error) {
+				require.NoError(t, err)
+				assert.NotNil(t, resp)
+				assert.Equal(t, 50, resp.Limit)
+			},
+		},
+		{
+			name: "正常系: limitが100より大きい場合、最大値100を使用",
+			req: &ListCodesRequest{
+				Limit:  200,
+				Offset: 0,
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				codes := []*redemption_code.RedemptionCode{}
+				mrcr.On("FindAll", mock.Anything, 100, 0).Return(codes, 0, nil)
+			},
+			wantError: false,
+			checkFunc: func(t *testing.T, resp *ListCodesResponse, err error) {
+				require.NoError(t, err)
+				assert.NotNil(t, resp)
+				assert.Equal(t, 100, resp.Limit)
+			},
+		},
+		{
+			name: "正常系: offsetが負の値の場合、0に補正",
+			req: &ListCodesRequest{
+				Limit:  10,
+				Offset: -5,
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				codes := []*redemption_code.RedemptionCode{}
+				mrcr.On("FindAll", mock.Anything, 10, 0).Return(codes, 0, nil)
+			},
+			wantError: false,
+			checkFunc: func(t *testing.T, resp *ListCodesResponse, err error) {
+				require.NoError(t, err)
+				assert.NotNil(t, resp)
+				assert.Equal(t, 0, resp.Offset)
+			},
+		},
+		{
+			name: "異常系: DBエラー",
+			req: &ListCodesRequest{
+				Limit:  10,
+				Offset: 0,
+			},
+			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
+				mrcr.On("FindAll", mock.Anything, 10, 0).Return(nil, 0, sql.ErrConnDone)
+			},
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCurrencyRepo := new(MockCurrencyRepository)
+			mockTransactionRepo := new(MockTransactionRepository)
+			mockRedemptionCodeRepo := new(MockRedemptionCodeRepository)
+			mockTxManager := new(MockTransactionManager)
+
+			tt.setupMocks(mockCurrencyRepo, mockTransactionRepo, mockRedemptionCodeRepo, mockTxManager)
+
+			tracer := otel.Tracer("test")
+			logger := otelinfra.NewLogger(tracer)
+			metrics, err := otelinfra.NewMetrics("test")
+			require.NoError(t, err)
+
+			svc := NewCodeRedemptionApplicationService(
+				mockCurrencyRepo,
+				mockTransactionRepo,
+				mockRedemptionCodeRepo,
+				mockTxManager,
+				logger,
+				metrics,
+			)
+
+			ctx := context.Background()
+			got, err := svc.ListCodes(ctx, tt.req)
 
 			if tt.wantError {
 				assert.Error(t, err)

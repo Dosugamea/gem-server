@@ -63,4 +63,14 @@ type RedemptionCodeRepository interface {
 
 	// SaveRedemption 引き換え履歴を保存
 	SaveRedemption(ctx context.Context, redemption *CodeRedemption) error
+
+	// Create 引き換えコードを作成
+	Create(ctx context.Context, code *RedemptionCode) error
+
+	// Delete 引き換えコードを削除
+	Delete(ctx context.Context, code string) error
+
+	// FindAll 引き換えコードの一覧を取得（ページネーション対応）
+	// 戻り値: (コード一覧, 総件数, エラー)
+	FindAll(ctx context.Context, limit, offset int) ([]*RedemptionCode, int, error)
 }

@@ -15,6 +15,267 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin/codes": {
+            "get": {
+                "description": "引き換えコードの一覧を取得します（ページネーション・フィルタリング対応）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "引き換えコード一覧を取得（管理API）",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "example": 50,
+                        "description": "取得件数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "description": "オフセット",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "active",
+                            "expired",
+                            "disabled"
+                        ],
+                        "type": "string",
+                        "example": "active",
+                        "description": "ステータスフィルタ",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "promotion",
+                            "gift",
+                            "event"
+                        ],
+                        "type": "string",
+                        "example": "promotion",
+                        "description": "コードタイプフィルタ",
+                        "name": "code_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "APIキー",
+                        "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "引き換えコード一覧取得成功",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ListCodesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "不正なリクエスト",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "認証エラー",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "新しい引き換えコードを作成します",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "引き換えコードを作成（管理API）",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "APIキー",
+                        "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "引き換えコード作成リクエスト",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateCodeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "引き換えコード作成成功",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateCodeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "不正なリクエスト",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "認証エラー",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "コードが既に存在",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/codes/{code}": {
+            "get": {
+                "description": "指定された引き換えコードの詳細を取得します",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "引き換えコードを取得（管理API）",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "PROMO2024",
+                        "description": "引き換えコード",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "APIキー",
+                        "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "引き換えコード取得成功",
+                        "schema": {
+                            "$ref": "#/definitions/handler.GetCodeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "不正なリクエスト",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "認証エラー",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "コードが見つからない",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "引き換えコードを削除します（使用済みコードは削除不可）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "引き換えコードを削除（管理API）",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "PROMO2024",
+                        "description": "引き換えコード",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "APIキー",
+                        "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "引き換えコード削除成功",
+                        "schema": {
+                            "$ref": "#/definitions/handler.DeleteCodeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "不正なリクエスト",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "認証エラー",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "コードが見つからない",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "コードが使用済みのため削除不可",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/users/{user_id}/balance": {
             "get": {
                 "description": "指定されたユーザーの通貨残高を取得します",
@@ -570,6 +831,60 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.CodeItem": {
+            "description": "引き換えコードアイテム",
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string",
+                    "example": "1000"
+                },
+                "code": {
+                    "type": "string",
+                    "example": "PROMO2024"
+                },
+                "code_type": {
+                    "type": "string",
+                    "example": "promotion"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "currency_type": {
+                    "type": "string",
+                    "example": "free"
+                },
+                "current_uses": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "max_uses": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "status": {
+                    "type": "string",
+                    "example": "active"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "valid_from": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "valid_until": {
+                    "type": "string",
+                    "example": "2024-12-31T23:59:59Z"
+                }
+            }
+        },
         "handler.ConsumeRequest": {
             "description": "通貨消費リクエスト",
             "type": "object",
@@ -594,6 +909,10 @@ const docTemplate = `{
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true
+                },
+                "requester": {
+                    "type": "string",
+                    "example": "game-server-01"
                 },
                 "use_priority": {
                     "type": "boolean",
@@ -651,6 +970,117 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.CreateCodeRequest": {
+            "description": "引き換えコード作成リクエスト",
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string",
+                    "example": "1000"
+                },
+                "code": {
+                    "type": "string",
+                    "example": "PROMO2024"
+                },
+                "code_type": {
+                    "type": "string",
+                    "enum": [
+                        "promotion",
+                        "gift",
+                        "event"
+                    ],
+                    "example": "promotion"
+                },
+                "currency_type": {
+                    "type": "string",
+                    "enum": [
+                        "paid",
+                        "free"
+                    ],
+                    "example": "free"
+                },
+                "max_uses": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "valid_from": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "valid_until": {
+                    "type": "string",
+                    "example": "2024-12-31T23:59:59Z"
+                }
+            }
+        },
+        "handler.CreateCodeResponse": {
+            "description": "引き換えコード作成レスポンス",
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string",
+                    "example": "1000"
+                },
+                "code": {
+                    "type": "string",
+                    "example": "PROMO2024"
+                },
+                "code_type": {
+                    "type": "string",
+                    "example": "promotion"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "currency_type": {
+                    "type": "string",
+                    "example": "free"
+                },
+                "current_uses": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "max_uses": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "status": {
+                    "type": "string",
+                    "example": "active"
+                },
+                "valid_from": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "valid_until": {
+                    "type": "string",
+                    "example": "2024-12-31T23:59:59Z"
+                }
+            }
+        },
+        "handler.DeleteCodeResponse": {
+            "description": "引き換えコード削除レスポンス",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "PROMO2024"
+                },
+                "deleted_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                }
+            }
+        },
         "handler.ErrorResponse": {
             "description": "エラーレスポンス",
             "type": "object",
@@ -679,6 +1109,60 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.GetCodeResponse": {
+            "description": "引き換えコード取得レスポンス",
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string",
+                    "example": "1000"
+                },
+                "code": {
+                    "type": "string",
+                    "example": "PROMO2024"
+                },
+                "code_type": {
+                    "type": "string",
+                    "example": "promotion"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "currency_type": {
+                    "type": "string",
+                    "example": "free"
+                },
+                "current_uses": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "max_uses": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "status": {
+                    "type": "string",
+                    "example": "active"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "valid_from": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "valid_until": {
+                    "type": "string",
+                    "example": "2024-12-31T23:59:59Z"
+                }
+            }
+        },
         "handler.GrantRequest": {
             "description": "通貨付与リクエスト",
             "type": "object",
@@ -702,6 +1186,10 @@ const docTemplate = `{
                 "reason": {
                     "type": "string",
                     "example": "イベント報酬"
+                },
+                "requester": {
+                    "type": "string",
+                    "example": "game-server-01"
                 }
             }
         },
@@ -720,6 +1208,30 @@ const docTemplate = `{
                 "transaction_id": {
                     "type": "string",
                     "example": "txn_123"
+                }
+            }
+        },
+        "handler.ListCodesResponse": {
+            "description": "引き換えコード一覧取得レスポンス",
+            "type": "object",
+            "properties": {
+                "codes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.CodeItem"
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "example": 50
+                },
+                "offset": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 100
                 }
             }
         },

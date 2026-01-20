@@ -19,6 +19,46 @@ definitions:
         example: user123
         type: string
     type: object
+  handler.CodeItem:
+    description: 引き換えコードアイテム
+    properties:
+      amount:
+        example: "1000"
+        type: string
+      code:
+        example: PROMO2024
+        type: string
+      code_type:
+        example: promotion
+        type: string
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      currency_type:
+        example: free
+        type: string
+      current_uses:
+        example: 0
+        type: integer
+      max_uses:
+        example: 100
+        type: integer
+      metadata:
+        additionalProperties: true
+        type: object
+      status:
+        example: active
+        type: string
+      updated_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      valid_from:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      valid_until:
+        example: "2024-12-31T23:59:59Z"
+        type: string
+    type: object
   handler.ConsumeRequest:
     description: 通貨消費リクエスト
     properties:
@@ -38,6 +78,9 @@ definitions:
       metadata:
         additionalProperties: true
         type: object
+      requester:
+        example: game-server-01
+        type: string
       use_priority:
         example: false
         type: boolean
@@ -78,6 +121,88 @@ definitions:
         example: paid
         type: string
     type: object
+  handler.CreateCodeRequest:
+    description: 引き換えコード作成リクエスト
+    properties:
+      amount:
+        example: "1000"
+        type: string
+      code:
+        example: PROMO2024
+        type: string
+      code_type:
+        enum:
+        - promotion
+        - gift
+        - event
+        example: promotion
+        type: string
+      currency_type:
+        enum:
+        - paid
+        - free
+        example: free
+        type: string
+      max_uses:
+        example: 100
+        type: integer
+      metadata:
+        additionalProperties: true
+        type: object
+      valid_from:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      valid_until:
+        example: "2024-12-31T23:59:59Z"
+        type: string
+    type: object
+  handler.CreateCodeResponse:
+    description: 引き換えコード作成レスポンス
+    properties:
+      amount:
+        example: "1000"
+        type: string
+      code:
+        example: PROMO2024
+        type: string
+      code_type:
+        example: promotion
+        type: string
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      currency_type:
+        example: free
+        type: string
+      current_uses:
+        example: 0
+        type: integer
+      max_uses:
+        example: 100
+        type: integer
+      metadata:
+        additionalProperties: true
+        type: object
+      status:
+        example: active
+        type: string
+      valid_from:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      valid_until:
+        example: "2024-12-31T23:59:59Z"
+        type: string
+    type: object
+  handler.DeleteCodeResponse:
+    description: 引き換えコード削除レスポンス
+    properties:
+      code:
+        example: PROMO2024
+        type: string
+      deleted_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+    type: object
   handler.ErrorResponse:
     description: エラーレスポンス
     properties:
@@ -98,6 +223,46 @@ definitions:
         example: Bearer
         type: string
     type: object
+  handler.GetCodeResponse:
+    description: 引き換えコード取得レスポンス
+    properties:
+      amount:
+        example: "1000"
+        type: string
+      code:
+        example: PROMO2024
+        type: string
+      code_type:
+        example: promotion
+        type: string
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      currency_type:
+        example: free
+        type: string
+      current_uses:
+        example: 0
+        type: integer
+      max_uses:
+        example: 100
+        type: integer
+      metadata:
+        additionalProperties: true
+        type: object
+      status:
+        example: active
+        type: string
+      updated_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      valid_from:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      valid_until:
+        example: "2024-12-31T23:59:59Z"
+        type: string
+    type: object
   handler.GrantRequest:
     description: 通貨付与リクエスト
     properties:
@@ -116,6 +281,9 @@ definitions:
       reason:
         example: イベント報酬
         type: string
+      requester:
+        example: game-server-01
+        type: string
     type: object
   handler.GrantResponse:
     description: 通貨付与レスポンス
@@ -129,6 +297,23 @@ definitions:
       transaction_id:
         example: txn_123
         type: string
+    type: object
+  handler.ListCodesResponse:
+    description: 引き換えコード一覧取得レスポンス
+    properties:
+      codes:
+        items:
+          $ref: '#/definitions/handler.CodeItem'
+        type: array
+      limit:
+        example: 50
+        type: integer
+      offset:
+        example: 0
+        type: integer
+      total:
+        example: 100
+        type: integer
     type: object
   handler.ProcessPaymentRequest:
     description: 決済処理リクエスト
@@ -257,6 +442,184 @@ info:
   title: Gem Server API
   version: "1.0"
 paths:
+  /admin/codes:
+    get:
+      consumes:
+      - application/json
+      description: 引き換えコードの一覧を取得します（ページネーション・フィルタリング対応）
+      parameters:
+      - default: 50
+        description: 取得件数
+        example: 50
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: オフセット
+        example: 0
+        in: query
+        name: offset
+        type: integer
+      - description: ステータスフィルタ
+        enum:
+        - active
+        - expired
+        - disabled
+        example: active
+        in: query
+        name: status
+        type: string
+      - description: コードタイプフィルタ
+        enum:
+        - promotion
+        - gift
+        - event
+        example: promotion
+        in: query
+        name: code_type
+        type: string
+      - description: APIキー
+        in: header
+        name: X-API-Key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 引き換えコード一覧取得成功
+          schema:
+            $ref: '#/definitions/handler.ListCodesResponse'
+        "400":
+          description: 不正なリクエスト
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: 認証エラー
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 引き換えコード一覧を取得（管理API）
+      tags:
+      - admin
+    post:
+      consumes:
+      - application/json
+      description: 新しい引き換えコードを作成します
+      parameters:
+      - description: APIキー
+        in: header
+        name: X-API-Key
+        required: true
+        type: string
+      - description: 引き換えコード作成リクエスト
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 引き換えコード作成成功
+          schema:
+            $ref: '#/definitions/handler.CreateCodeResponse'
+        "400":
+          description: 不正なリクエスト
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: 認証エラー
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: コードが既に存在
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 引き換えコードを作成（管理API）
+      tags:
+      - admin
+  /admin/codes/{code}:
+    delete:
+      consumes:
+      - application/json
+      description: 引き換えコードを削除します（使用済みコードは削除不可）
+      parameters:
+      - description: 引き換えコード
+        example: PROMO2024
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: APIキー
+        in: header
+        name: X-API-Key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 引き換えコード削除成功
+          schema:
+            $ref: '#/definitions/handler.DeleteCodeResponse'
+        "400":
+          description: 不正なリクエスト
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: 認証エラー
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: コードが見つからない
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: コードが使用済みのため削除不可
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 引き換えコードを削除（管理API）
+      tags:
+      - admin
+    get:
+      consumes:
+      - application/json
+      description: 指定された引き換えコードの詳細を取得します
+      parameters:
+      - description: 引き換えコード
+        example: PROMO2024
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: APIキー
+        in: header
+        name: X-API-Key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 引き換えコード取得成功
+          schema:
+            $ref: '#/definitions/handler.GetCodeResponse'
+        "400":
+          description: 不正なリクエスト
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: 認証エラー
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: コードが見つからない
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 引き換えコードを取得（管理API）
+      tags:
+      - admin
   /admin/users/{user_id}/balance:
     get:
       consumes:

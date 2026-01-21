@@ -164,13 +164,16 @@ func (r *PaymentRequestRepository) FindByPaymentRequestID(ctx context.Context, p
 		return nil, fmt.Errorf("invalid currency type: %w", err)
 	}
 
-	pr := payment_request.NewPaymentRequest(
+	pr, err := payment_request.NewPaymentRequest(
 		dbPaymentRequestID,
 		dbUserID,
 		amount,
 		dbCurrency,
 		ct,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create payment request entity: %w", err)
+	}
 
 	// ステータスを設定
 	switch dbStatus {

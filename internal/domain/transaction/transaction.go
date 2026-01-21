@@ -1,8 +1,35 @@
 package transaction
 
 import (
+	"errors"
 	"gem-server/internal/domain/currency"
+	"regexp"
 	"time"
+)
+
+var (
+	// ErrInvalidTransactionID トランザクションIDが無効
+	ErrInvalidTransactionID = errors.New("invalid transaction id")
+	// ErrInvalidUserID ユーザーIDが無効
+	ErrInvalidUserID = errors.New("invalid user id")
+	// ErrInvalidAmount 金額が無効
+	ErrInvalidAmount = errors.New("invalid amount")
+	// ErrAmountTooLarge 金額が大きすぎる
+	ErrAmountTooLarge = errors.New("amount too large")
+	// ErrBalanceOutOfRange 残高が範囲外
+	ErrBalanceOutOfRange = errors.New("balance out of range")
+)
+
+const (
+	// MaxAmount 最大金額 (10兆)
+	MaxAmount = 10_000_000_000_000
+	// MinBalance 最小残高 (-10兆)
+	MinBalance = -10_000_000_000_000
+)
+
+var (
+	idRegex     = regexp.MustCompile(`^[a-zA-Z0-9_\-\.\@]{1,255}$`)
+	userIDRegex = regexp.MustCompile(`^[a-zA-Z0-9_\-\.\@]{1,255}$`)
 )
 
 // Transaction トランザクションエンティティ
@@ -33,7 +60,7 @@ func NewTransaction(
 	balanceAfter int64,
 	status TransactionStatus,
 	metadata map[string]interface{},
-) *Transaction {
+) (*Transaction, error) {
 	return NewTransactionWithRequester(
 		transactionID,
 		userID,
@@ -60,7 +87,26 @@ func NewTransactionWithRequester(
 	status TransactionStatus,
 	requester *string,
 	metadata map[string]interface{},
-) *Transaction {
+) (*Transaction, error) {
+	if !idRegex.MatchString(transactionID) {
+		return nil, ErrInvalidTransactionID
+	}
+	if !userIDRegex.MatchString(userID) {
+		return nil, ErrInvalidUserID
+	}
+	if amount <= 0 {
+		return nil, ErrInvalidAmount
+	}
+	if amount > MaxAmount {
+		return nil, ErrAmountTooLarge
+	}
+	if balanceBefore < MinBalance || balanceBefore > MaxAmount {
+		return nil, ErrBalanceOutOfRange
+	}
+	if balanceAfter < MinBalance || balanceAfter > MaxAmount {
+		return nil, ErrBalanceOutOfRange
+	}
+
 	now := time.Now()
 	return &Transaction{
 		transactionID:    transactionID,
@@ -76,7 +122,7 @@ func NewTransactionWithRequester(
 		metadata:         metadata,
 		createdAt:        now,
 		updatedAt:        now,
-	}
+	}, nil
 }
 
 // TransactionID トランザクションIDを返す
@@ -164,4 +210,43 @@ func (t *Transaction) UpdateStatus(status TransactionStatus) error {
 	t.status = status
 	t.updatedAt = time.Now()
 	return nil
+}
+
+// MustNewTransaction テスト用ヘルパー: NewTransactionを呼び出し、エラーが発生した場合はpanicする
+func MustNewTransaction(
+	transactionID string,
+	userID string,
+	transactionType TransactionType,
+	currencyType currency.CurrencyType,
+	amount int64,
+	balanceBefore int64,
+	balanceAfter int64,
+	status TransactionStatus,
+	metadata map[string]interface{},
+) *Transaction {
+	tx, err := NewTransaction(transactionID, userID, transactionType, currencyType, amount, balanceBefore, balanceAfter, status, metadata)
+	if err != nil {
+		panic(err)
+	}
+	return tx
+}
+
+// MustNewTransactionWithRequester テスト用ヘルパー: NewTransactionWithRequesterを呼び出し、エラーが発生した場合はpanicする
+func MustNewTransactionWithRequester(
+	transactionID string,
+	userID string,
+	transactionType TransactionType,
+	currencyType currency.CurrencyType,
+	amount int64,
+	balanceBefore int64,
+	balanceAfter int64,
+	status TransactionStatus,
+	requester *string,
+	metadata map[string]interface{},
+) *Transaction {
+	tx, err := NewTransactionWithRequester(transactionID, userID, transactionType, currencyType, amount, balanceBefore, balanceAfter, status, requester, metadata)
+	if err != nil {
+		panic(err)
+	}
+	return tx
 }

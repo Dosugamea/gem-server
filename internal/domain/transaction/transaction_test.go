@@ -9,6 +9,47 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func mustNewTransaction(
+	transactionID string,
+	userID string,
+	transactionType TransactionType,
+	currencyType currency.CurrencyType,
+	amount int64,
+	balanceBefore int64,
+	balanceAfter int64,
+	status TransactionStatus,
+	metadata map[string]interface{},
+) *Transaction {
+	tx, err := NewTransaction(
+		transactionID, userID, transactionType, currencyType, amount, balanceBefore, balanceAfter, status, metadata,
+	)
+	if err != nil {
+		panic(err)
+	}
+	return tx
+}
+
+func mustNewTransactionWithRequester(
+	transactionID string,
+	userID string,
+	transactionType TransactionType,
+	currencyType currency.CurrencyType,
+	amount int64,
+	balanceBefore int64,
+	balanceAfter int64,
+	status TransactionStatus,
+	requester *string,
+	metadata map[string]interface{},
+) *Transaction {
+	tx, err := NewTransactionWithRequester(
+		transactionID, userID, transactionType, currencyType, amount, balanceBefore, balanceAfter, status, requester, metadata,
+	)
+	if err != nil {
+		panic(err)
+	}
+	return tx
+}
+
 func TestNewTransaction(t *testing.T) {
 	metadata := map[string]interface{}{
 		"reason": "test",
@@ -26,6 +67,7 @@ func TestNewTransaction(t *testing.T) {
 		status          TransactionStatus
 		metadata        map[string]interface{}
 		want            *Transaction
+		wantErr         error
 	}{
 		{
 			name:            "正常系: 付与トランザクション",
@@ -50,12 +92,69 @@ func TestNewTransaction(t *testing.T) {
 				paymentRequestID: nil,
 				metadata:         metadata,
 			},
+			wantErr: nil,
+		},
+		{
+			name:            "異常系: 無効なTransactionID",
+			transactionID:   "tx/123",
+			userID:          "user123",
+			transactionType: TransactionTypeGrant,
+			currencyType:    currency.CurrencyTypePaid,
+			amount:          1000,
+			balanceBefore:   0,
+			balanceAfter:    1000,
+			status:          TransactionStatusCompleted,
+			metadata:        metadata,
+			want:            nil,
+			wantErr:         ErrInvalidTransactionID,
+		},
+		{
+			name:            "異常系: 無効なUserID",
+			transactionID:   "tx123",
+			userID:          "user/123",
+			transactionType: TransactionTypeGrant,
+			currencyType:    currency.CurrencyTypePaid,
+			amount:          1000,
+			balanceBefore:   0,
+			balanceAfter:    1000,
+			status:          TransactionStatusCompleted,
+			metadata:        metadata,
+			want:            nil,
+			wantErr:         ErrInvalidUserID,
+		},
+		{
+			name:            "異常系: 無効な金額 (0)",
+			transactionID:   "tx123",
+			userID:          "user123",
+			transactionType: TransactionTypeGrant,
+			currencyType:    currency.CurrencyTypePaid,
+			amount:          0,
+			balanceBefore:   0,
+			balanceAfter:    0,
+			status:          TransactionStatusCompleted,
+			metadata:        metadata,
+			want:            nil,
+			wantErr:         ErrInvalidAmount,
+		},
+		{
+			name:            "異常系: 残高範囲外 (過大)",
+			transactionID:   "tx123",
+			userID:          "user123",
+			transactionType: TransactionTypeGrant,
+			currencyType:    currency.CurrencyTypePaid,
+			amount:          1000,
+			balanceBefore:   MaxAmount + 1,
+			balanceAfter:    MaxAmount + 1001, // 単純化のためここも大きく
+			status:          TransactionStatusCompleted,
+			metadata:        metadata,
+			want:            nil,
+			wantErr:         ErrBalanceOutOfRange,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewTransaction(
+			got, err := NewTransaction(
 				tt.transactionID,
 				tt.userID,
 				tt.transactionType,
@@ -66,21 +165,28 @@ func TestNewTransaction(t *testing.T) {
 				tt.status,
 				tt.metadata,
 			)
-			assert.Equal(t, tt.want.TransactionID(), got.TransactionID())
-			assert.Equal(t, tt.want.UserID(), got.UserID())
-			assert.Equal(t, tt.want.TransactionType(), got.TransactionType())
-			assert.Equal(t, tt.want.CurrencyType(), got.CurrencyType())
-			assert.Equal(t, tt.want.Amount(), got.Amount())
-			assert.Equal(t, tt.want.BalanceBefore(), got.BalanceBefore())
-			assert.Equal(t, tt.want.BalanceAfter(), got.BalanceAfter())
-			assert.Equal(t, tt.want.Status(), got.Status())
-			assert.Nil(t, got.PaymentRequestID())
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.wantErr, err)
+				assert.Nil(t, got)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want.TransactionID(), got.TransactionID())
+				assert.Equal(t, tt.want.UserID(), got.UserID())
+				assert.Equal(t, tt.want.TransactionType(), got.TransactionType())
+				assert.Equal(t, tt.want.CurrencyType(), got.CurrencyType())
+				assert.Equal(t, tt.want.Amount(), got.Amount())
+				assert.Equal(t, tt.want.BalanceBefore(), got.BalanceBefore())
+				assert.Equal(t, tt.want.BalanceAfter(), got.BalanceAfter())
+				assert.Equal(t, tt.want.Status(), got.Status())
+				assert.Nil(t, got.PaymentRequestID())
+			}
 		})
 	}
 }
 
 func TestTransaction_SetPaymentRequestID(t *testing.T) {
-	tx := NewTransaction(
+	tx := mustNewTransaction(
 		"tx123",
 		"user123",
 		TransactionTypeConsume,
@@ -130,7 +236,7 @@ func TestTransaction_UpdateStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tx := NewTransaction(
+			tx := mustNewTransaction(
 				"tx123",
 				"user123",
 				TransactionTypeConsume,
@@ -158,7 +264,7 @@ func TestTransaction_GetterMethods(t *testing.T) {
 	metadata := map[string]interface{}{
 		"key": "value",
 	}
-	tx := NewTransaction(
+	tx := mustNewTransaction(
 		"tx123",
 		"user123",
 		TransactionTypeGrant,
@@ -189,7 +295,7 @@ func TestNewTransactionWithRequester(t *testing.T) {
 	}
 	requester := "game-server-01"
 
-	tx := NewTransactionWithRequester(
+	tx := mustNewTransactionWithRequester(
 		"tx123",
 		"user123",
 		TransactionTypeGrant,
@@ -209,7 +315,7 @@ func TestNewTransactionWithRequester(t *testing.T) {
 }
 
 func TestTransaction_SetRequester(t *testing.T) {
-	tx := NewTransaction(
+	tx := mustNewTransaction(
 		"tx123",
 		"user123",
 		TransactionTypeConsume,

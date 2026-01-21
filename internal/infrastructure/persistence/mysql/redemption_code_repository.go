@@ -113,7 +113,7 @@ func (r *RedemptionCodeRepository) FindByCode(ctx context.Context, code string) 
 		}
 	}
 
-	rc := redemption_code.NewRedemptionCode(
+	rc, err := redemption_code.NewRedemptionCode(
 		dbCode,
 		ct,
 		currencyType,
@@ -123,6 +123,9 @@ func (r *RedemptionCodeRepository) FindByCode(ctx context.Context, code string) 
 		validUntil,
 		metadata,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create redemption code entity: %w", err)
+	}
 
 	// current_usesとstatusを設定
 	rc.SetCurrentUses(currentUses)
@@ -412,7 +415,7 @@ func (r *RedemptionCodeRepository) FindAll(ctx context.Context, limit, offset in
 	}
 	defer rows.Close()
 
-	var codes []*redemption_code.RedemptionCode
+	codes := []*redemption_code.RedemptionCode{}
 	for rows.Next() {
 		var dbCode, dbCodeType, dbCurrencyType, dbStatus string
 		var amount int64
@@ -463,7 +466,7 @@ func (r *RedemptionCodeRepository) FindAll(ctx context.Context, limit, offset in
 			}
 		}
 
-		rc := redemption_code.NewRedemptionCode(
+		rc, err := redemption_code.NewRedemptionCode(
 			dbCode,
 			ct,
 			currencyType,
@@ -473,6 +476,9 @@ func (r *RedemptionCodeRepository) FindAll(ctx context.Context, limit, offset in
 			validUntil,
 			metadata,
 		)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to create redemption code entity: %w", err)
+		}
 
 		rc.SetCurrentUses(currentUses)
 		rc.SetStatus(status)

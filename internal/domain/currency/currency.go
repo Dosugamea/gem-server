@@ -1,5 +1,28 @@
 package currency
 
+import (
+	"errors"
+	"regexp"
+)
+
+var (
+	// ErrInvalidUserID ユーザーIDが無効
+	ErrInvalidUserID = errors.New("invalid user id")
+	// ErrBalanceOutOfRange 残高が範囲外
+	ErrBalanceOutOfRange = errors.New("balance out of range")
+	// ErrAmountTooLarge 金額が大きすぎる
+	ErrAmountTooLarge = errors.New("amount too large")
+)
+
+const (
+	// MaxAmount 最大金額 (10兆)
+	MaxAmount = 10_000_000_000_000
+	// MinBalance 最小残高 (-10兆: 一時的なマイナス許容のため)
+	MinBalance = -10_000_000_000_000
+)
+
+var userIDRegex = regexp.MustCompile(`^[a-zA-Z0-9_\-\.\@]{1,255}$`)
+
 // Currency 通貨エンティティ
 type Currency struct {
 	userID       string
@@ -9,13 +32,19 @@ type Currency struct {
 }
 
 // NewCurrency 新しいCurrencyエンティティを作成
-func NewCurrency(userID string, currencyType CurrencyType, balance int64, version int) *Currency {
+func NewCurrency(userID string, currencyType CurrencyType, balance int64, version int) (*Currency, error) {
+	if !userIDRegex.MatchString(userID) {
+		return nil, ErrInvalidUserID
+	}
+	if balance < MinBalance || balance > MaxAmount {
+		return nil, ErrBalanceOutOfRange
+	}
 	return &Currency{
 		userID:       userID,
 		currencyType: currencyType,
 		balance:      balance,
 		version:      version,
-	}
+	}, nil
 }
 
 // UserID ユーザーIDを返す
@@ -43,6 +72,13 @@ func (c *Currency) Grant(amount int64) error {
 	if amount <= 0 {
 		return ErrInvalidAmount
 	}
+	if amount > MaxAmount {
+		return ErrAmountTooLarge
+	}
+	// オーバーフローチェック
+	if c.balance > MaxAmount-amount {
+		return ErrBalanceOutOfRange
+	}
 	c.balance += amount
 	c.version++
 	return nil
@@ -52,6 +88,9 @@ func (c *Currency) Grant(amount int64) error {
 func (c *Currency) Consume(amount int64) error {
 	if amount <= 0 {
 		return ErrInvalidAmount
+	}
+	if amount > MaxAmount {
+		return ErrAmountTooLarge
 	}
 	if c.balance < amount {
 		return ErrInsufficientBalance
@@ -67,6 +106,13 @@ func (c *Currency) ConsumeAllowNegative(amount int64) error {
 	if amount <= 0 {
 		return ErrInvalidAmount
 	}
+	if amount > MaxAmount {
+		return ErrAmountTooLarge
+	}
+	// アンダーフローチェック (MinBalanceを下回らないか)
+	if c.balance < MinBalance+amount {
+		return ErrBalanceOutOfRange
+	}
 	c.balance -= amount
 	c.version++
 	return nil
@@ -75,4 +121,13 @@ func (c *Currency) ConsumeAllowNegative(amount int64) error {
 // IncrementVersion バージョンをインクリメント（楽観的ロック用）
 func (c *Currency) IncrementVersion() {
 	c.version++
+}
+
+// MustNewCurrency テスト用ヘルパー: NewCurrencyを呼び出し、エラーが発生した場合はpanicする
+func MustNewCurrency(userID string, currencyType CurrencyType, balance int64, version int) *Currency {
+	c, err := NewCurrency(userID, currencyType, balance, version)
+	if err != nil {
+		panic(err)
+	}
+	return c
 }

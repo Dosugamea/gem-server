@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewRedemptionCode(t *testing.T) {
+func TestMustNewRedemptionCode(t *testing.T) {
 	now := time.Now()
 	validFrom := now.Add(-24 * time.Hour)
 	validUntil := now.Add(24 * time.Hour)
@@ -79,7 +79,7 @@ func TestNewRedemptionCode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewRedemptionCode(
+			got := MustNewRedemptionCode(
 				tt.code,
 				tt.codeType,
 				tt.currencyType,
@@ -119,7 +119,7 @@ func TestRedemptionCode_IsValid(t *testing.T) {
 	}{
 		{
 			name: "正常系: 有効なコード（アクティブ、期限内、使用回数未達）",
-			code: NewRedemptionCode(
+			code: MustNewRedemptionCode(
 				"TEST123",
 				CodeTypePromotion,
 				currency.CurrencyTypePaid,
@@ -133,7 +133,7 @@ func TestRedemptionCode_IsValid(t *testing.T) {
 		},
 		{
 			name: "正常系: 無制限使用コード",
-			code: NewRedemptionCode(
+			code: MustNewRedemptionCode(
 				"UNLIMITED",
 				CodeTypeGift,
 				currency.CurrencyTypePaid,
@@ -147,7 +147,7 @@ func TestRedemptionCode_IsValid(t *testing.T) {
 		},
 		{
 			name: "異常系: 無効化されたコード",
-			code: NewRedemptionCode(
+			code: MustNewRedemptionCode(
 				"TEST123",
 				CodeTypePromotion,
 				currency.CurrencyTypePaid,
@@ -164,7 +164,7 @@ func TestRedemptionCode_IsValid(t *testing.T) {
 		},
 		{
 			name: "異常系: 期限切れコード",
-			code: NewRedemptionCode(
+			code: MustNewRedemptionCode(
 				"TEST123",
 				CodeTypePromotion,
 				currency.CurrencyTypePaid,
@@ -178,7 +178,7 @@ func TestRedemptionCode_IsValid(t *testing.T) {
 		},
 		{
 			name: "異常系: 有効期限前のコード",
-			code: NewRedemptionCode(
+			code: MustNewRedemptionCode(
 				"TEST123",
 				CodeTypePromotion,
 				currency.CurrencyTypePaid,
@@ -192,7 +192,7 @@ func TestRedemptionCode_IsValid(t *testing.T) {
 		},
 		{
 			name: "異常系: 使用回数上限に達したコード",
-			code: NewRedemptionCode(
+			code: MustNewRedemptionCode(
 				"TEST123",
 				CodeTypePromotion,
 				currency.CurrencyTypePaid,
@@ -209,7 +209,7 @@ func TestRedemptionCode_IsValid(t *testing.T) {
 		},
 		{
 			name: "異常系: 期限切れステータスのコード",
-			code: NewRedemptionCode(
+			code: MustNewRedemptionCode(
 				"TEST123",
 				CodeTypePromotion,
 				currency.CurrencyTypePaid,
@@ -250,7 +250,7 @@ func TestRedemptionCode_CanBeRedeemed(t *testing.T) {
 	}{
 		{
 			name: "正常系: 引き換え可能なコード",
-			code: NewRedemptionCode(
+			code: MustNewRedemptionCode(
 				"TEST123",
 				CodeTypePromotion,
 				currency.CurrencyTypePaid,
@@ -264,7 +264,7 @@ func TestRedemptionCode_CanBeRedeemed(t *testing.T) {
 		},
 		{
 			name: "異常系: 無効化されたコード",
-			code: NewRedemptionCode(
+			code: MustNewRedemptionCode(
 				"TEST123",
 				CodeTypePromotion,
 				currency.CurrencyTypePaid,
@@ -306,7 +306,7 @@ func TestRedemptionCode_Redeem(t *testing.T) {
 	}{
 		{
 			name: "正常系: 引き換え成功",
-			code: NewRedemptionCode(
+			code: MustNewRedemptionCode(
 				"TEST123",
 				CodeTypePromotion,
 				currency.CurrencyTypePaid,
@@ -321,7 +321,7 @@ func TestRedemptionCode_Redeem(t *testing.T) {
 		},
 		{
 			name: "正常系: 複数回引き換え可能なコード",
-			code: NewRedemptionCode(
+			code: MustNewRedemptionCode(
 				"MULTI",
 				CodeTypeGift,
 				currency.CurrencyTypePaid,
@@ -336,7 +336,7 @@ func TestRedemptionCode_Redeem(t *testing.T) {
 		},
 		{
 			name: "異常系: 無効化されたコード",
-			code: NewRedemptionCode(
+			code: MustNewRedemptionCode(
 				"TEST123",
 				CodeTypePromotion,
 				currency.CurrencyTypePaid,
@@ -354,7 +354,7 @@ func TestRedemptionCode_Redeem(t *testing.T) {
 		},
 		{
 			name: "異常系: 使用回数上限に達したコード",
-			code: NewRedemptionCode(
+			code: MustNewRedemptionCode(
 				"TEST123",
 				CodeTypePromotion,
 				currency.CurrencyTypePaid,
@@ -395,7 +395,7 @@ func TestRedemptionCode_Disable(t *testing.T) {
 	validFrom := now.Add(-24 * time.Hour)
 	validUntil := now.Add(24 * time.Hour)
 
-	code := NewRedemptionCode(
+	code := MustNewRedemptionCode(
 		"TEST123",
 		CodeTypePromotion,
 		currency.CurrencyTypePaid,
@@ -416,7 +416,7 @@ func TestRedemptionCode_Expire(t *testing.T) {
 	validFrom := now.Add(-24 * time.Hour)
 	validUntil := now.Add(24 * time.Hour)
 
-	code := NewRedemptionCode(
+	code := MustNewRedemptionCode(
 		"TEST123",
 		CodeTypePromotion,
 		currency.CurrencyTypePaid,
@@ -437,7 +437,7 @@ func TestRedemptionCode_SetCurrentUses(t *testing.T) {
 	validFrom := now.Add(-24 * time.Hour)
 	validUntil := now.Add(24 * time.Hour)
 
-	code := NewRedemptionCode(
+	code := MustNewRedemptionCode(
 		"TEST123",
 		CodeTypePromotion,
 		currency.CurrencyTypePaid,
@@ -458,7 +458,7 @@ func TestRedemptionCode_SetStatus(t *testing.T) {
 	validFrom := now.Add(-24 * time.Hour)
 	validUntil := now.Add(24 * time.Hour)
 
-	code := NewRedemptionCode(
+	code := MustNewRedemptionCode(
 		"TEST123",
 		CodeTypePromotion,
 		currency.CurrencyTypePaid,

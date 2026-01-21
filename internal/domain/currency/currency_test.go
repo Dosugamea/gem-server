@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewCurrency(t *testing.T) {
+func TestMustNewCurrency(t *testing.T) {
 	tests := []struct {
 		name         string
 		userID       string
@@ -59,7 +59,7 @@ func TestNewCurrency(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewCurrency(tt.userID, tt.currencyType, tt.balance, tt.version)
+			got := MustNewCurrency(tt.userID, tt.currencyType, tt.balance, tt.version)
 			assert.Equal(t, tt.want.userID, got.UserID())
 			assert.Equal(t, tt.want.currencyType, got.CurrencyType())
 			assert.Equal(t, tt.want.balance, got.Balance())
@@ -79,7 +79,7 @@ func TestCurrency_Grant(t *testing.T) {
 	}{
 		{
 			name:        "正常系: 通貨を付与",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 1000, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 1000, 1),
 			amount:      500,
 			wantBalance: 1500,
 			wantVersion: 2,
@@ -87,7 +87,7 @@ func TestCurrency_Grant(t *testing.T) {
 		},
 		{
 			name:        "正常系: ゼロ残高から付与",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 0, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 0, 1),
 			amount:      1000,
 			wantBalance: 1000,
 			wantVersion: 2,
@@ -95,7 +95,7 @@ func TestCurrency_Grant(t *testing.T) {
 		},
 		{
 			name:        "正常系: マイナス残高から付与",
-			currency:    NewCurrency("user123", CurrencyTypePaid, -100, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, -100, 1),
 			amount:      200,
 			wantBalance: 100,
 			wantVersion: 2,
@@ -103,7 +103,7 @@ func TestCurrency_Grant(t *testing.T) {
 		},
 		{
 			name:        "異常系: 無効な金額（0）",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 1000, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 1000, 1),
 			amount:      0,
 			wantBalance: 1000,
 			wantVersion: 1,
@@ -111,7 +111,7 @@ func TestCurrency_Grant(t *testing.T) {
 		},
 		{
 			name:        "異常系: 無効な金額（マイナス）",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 1000, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 1000, 1),
 			amount:      -100,
 			wantBalance: 1000,
 			wantVersion: 1,
@@ -147,7 +147,7 @@ func TestCurrency_Consume(t *testing.T) {
 	}{
 		{
 			name:        "正常系: 通貨を消費",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 1000, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 1000, 1),
 			amount:      300,
 			wantBalance: 700,
 			wantVersion: 2,
@@ -155,7 +155,7 @@ func TestCurrency_Consume(t *testing.T) {
 		},
 		{
 			name:        "正常系: 残高全額を消費",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 1000, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 1000, 1),
 			amount:      1000,
 			wantBalance: 0,
 			wantVersion: 2,
@@ -163,7 +163,7 @@ func TestCurrency_Consume(t *testing.T) {
 		},
 		{
 			name:        "異常系: 残高不足",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 1000, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 1000, 1),
 			amount:      1500,
 			wantBalance: 1000,
 			wantVersion: 1,
@@ -171,7 +171,7 @@ func TestCurrency_Consume(t *testing.T) {
 		},
 		{
 			name:        "異常系: 無効な金額（0）",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 1000, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 1000, 1),
 			amount:      0,
 			wantBalance: 1000,
 			wantVersion: 1,
@@ -179,7 +179,7 @@ func TestCurrency_Consume(t *testing.T) {
 		},
 		{
 			name:        "異常系: 無効な金額（マイナス）",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 1000, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 1000, 1),
 			amount:      -100,
 			wantBalance: 1000,
 			wantVersion: 1,
@@ -187,7 +187,7 @@ func TestCurrency_Consume(t *testing.T) {
 		},
 		{
 			name:        "異常系: ゼロ残高から消費",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 0, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 0, 1),
 			amount:      100,
 			wantBalance: 0,
 			wantVersion: 1,
@@ -223,7 +223,7 @@ func TestCurrency_ConsumeAllowNegative(t *testing.T) {
 	}{
 		{
 			name:        "正常系: 通貨を消費（残高あり）",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 1000, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 1000, 1),
 			amount:      300,
 			wantBalance: 700,
 			wantVersion: 2,
@@ -231,7 +231,7 @@ func TestCurrency_ConsumeAllowNegative(t *testing.T) {
 		},
 		{
 			name:        "正常系: マイナス残高を許可して消費",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 1000, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 1000, 1),
 			amount:      1500,
 			wantBalance: -500,
 			wantVersion: 2,
@@ -239,7 +239,7 @@ func TestCurrency_ConsumeAllowNegative(t *testing.T) {
 		},
 		{
 			name:        "正常系: ゼロ残高からマイナスへ",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 0, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 0, 1),
 			amount:      500,
 			wantBalance: -500,
 			wantVersion: 2,
@@ -247,7 +247,7 @@ func TestCurrency_ConsumeAllowNegative(t *testing.T) {
 		},
 		{
 			name:        "正常系: 既にマイナス残高からさらに消費",
-			currency:    NewCurrency("user123", CurrencyTypePaid, -100, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, -100, 1),
 			amount:      200,
 			wantBalance: -300,
 			wantVersion: 2,
@@ -255,7 +255,7 @@ func TestCurrency_ConsumeAllowNegative(t *testing.T) {
 		},
 		{
 			name:        "異常系: 無効な金額（0）",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 1000, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 1000, 1),
 			amount:      0,
 			wantBalance: 1000,
 			wantVersion: 1,
@@ -263,7 +263,7 @@ func TestCurrency_ConsumeAllowNegative(t *testing.T) {
 		},
 		{
 			name:        "異常系: 無効な金額（マイナス）",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 1000, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 1000, 1),
 			amount:      -100,
 			wantBalance: 1000,
 			wantVersion: 1,
@@ -296,12 +296,12 @@ func TestCurrency_IncrementVersion(t *testing.T) {
 	}{
 		{
 			name:        "正常系: バージョンをインクリメント",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 1000, 1),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 1000, 1),
 			wantVersion: 2,
 		},
 		{
 			name:        "正常系: ゼロからインクリメント",
-			currency:    NewCurrency("user123", CurrencyTypePaid, 1000, 0),
+			currency:    MustNewCurrency("user123", CurrencyTypePaid, 1000, 0),
 			wantVersion: 1,
 		},
 	}

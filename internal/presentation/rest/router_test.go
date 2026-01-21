@@ -475,8 +475,8 @@ func TestRouter_AuthenticatedEndpoints(t *testing.T) {
 			method: http.MethodGet,
 			setupMock: func(mcr *MockCurrencyRepository) {
 				// モックを設定して正常に動作することを確認
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 500, 1)
+				paidCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				freeCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypeFree, 500, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(paidCurrency, nil)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil)
 			},

@@ -1,6 +1,7 @@
 package payment_request
 
 import (
+	"errors"
 	"gem-server/internal/domain/currency"
 	"time"
 )
@@ -40,15 +41,29 @@ func NewPaymentRequest(
 	paymentRequestID string,
 	userID string,
 	amount int64,
-	currency string,
+	currencyCode string,
 	currencyType currency.CurrencyType,
-) *PaymentRequest {
+) (*PaymentRequest, error) {
+	if paymentRequestID == "" {
+		return nil, errors.New("invalid payment request id")
+	}
+	if userID == "" {
+		return nil, errors.New("invalid user id")
+	}
+	if amount <= 0 {
+		return nil, errors.New("invalid amount")
+	}
+	// 簡易的な通貨コードチェック (3文字)
+	if len(currencyCode) != 3 {
+		return nil, errors.New("invalid currency code")
+	}
+
 	now := time.Now()
 	return &PaymentRequest{
 		paymentRequestID:  paymentRequestID,
 		userID:            userID,
 		amount:            amount,
-		currency:          currency,
+		currency:          currencyCode,
 		currencyType:      currencyType,
 		status:            PaymentRequestStatusPending,
 		paymentMethodData: make(map[string]interface{}),
@@ -56,7 +71,7 @@ func NewPaymentRequest(
 		response:          make(map[string]interface{}),
 		createdAt:         now,
 		updatedAt:         now,
-	}
+	}, nil
 }
 
 // PaymentRequestID PaymentRequest IDを返す
@@ -158,4 +173,19 @@ func (pr *PaymentRequest) IsCompleted() bool {
 // IsPending 処理中状態かどうかを返す
 func (pr *PaymentRequest) IsPending() bool {
 	return pr.status == PaymentRequestStatusPending
+}
+
+// MustNewPaymentRequest テスト用ヘルパー: NewPaymentRequestを呼び出し、エラーが発生した場合はpanicする
+func MustNewPaymentRequest(
+	paymentRequestID string,
+	userID string,
+	amount int64,
+	currencyCode string,
+	currencyType currency.CurrencyType,
+) *PaymentRequest {
+	pr, err := NewPaymentRequest(paymentRequestID, userID, amount, currencyCode, currencyType)
+	if err != nil {
+		panic(err)
+	}
+	return pr
 }

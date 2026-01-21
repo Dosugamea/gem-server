@@ -43,7 +43,7 @@ func TestCurrencyRepository_FindByUserIDAndType(t *testing.T) {
 					WithArgs("user123", "paid").
 					WillReturnRows(rows)
 			},
-			want:      currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1),
+			want:      currency.MustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1),
 			wantError: false,
 		},
 		{
@@ -117,7 +117,7 @@ func TestCurrencyRepository_Save(t *testing.T) {
 	}{
 		{
 			name:     "正常系: 通貨を保存",
-			currency: currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1),
+			currency: currency.MustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1),
 			setupMock: func() {
 				mock.ExpectExec(`UPDATE currency_balances`).
 					WithArgs(int64(1000), "user123", "paid", 1).
@@ -127,7 +127,7 @@ func TestCurrencyRepository_Save(t *testing.T) {
 		},
 		{
 			name:     "異常系: 楽観的ロック失敗（行が更新されない）",
-			currency: currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1),
+			currency: currency.MustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1),
 			setupMock: func() {
 				mock.ExpectExec(`UPDATE currency_balances`).
 					WithArgs(int64(1000), "user123", "paid", 1).
@@ -137,7 +137,7 @@ func TestCurrencyRepository_Save(t *testing.T) {
 		},
 		{
 			name:     "異常系: DBエラー",
-			currency: currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1),
+			currency: currency.MustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1),
 			setupMock: func() {
 				mock.ExpectExec(`UPDATE currency_balances`).
 					WithArgs(int64(1000), "user123", "paid", 1).
@@ -182,7 +182,7 @@ func TestCurrencyRepository_Create(t *testing.T) {
 	}{
 		{
 			name:     "正常系: 新規通貨を作成",
-			currency: currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 0),
+			currency: currency.MustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 0),
 			setupMock: func() {
 				// ensureUserExistsのモック
 				mock.ExpectExec(`INSERT INTO users`).
@@ -197,7 +197,7 @@ func TestCurrencyRepository_Create(t *testing.T) {
 		},
 		{
 			name:     "異常系: ユーザー作成エラー",
-			currency: currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 0),
+			currency: currency.MustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 0),
 			setupMock: func() {
 				mock.ExpectExec(`INSERT INTO users`).
 					WithArgs("user123").
@@ -207,7 +207,7 @@ func TestCurrencyRepository_Create(t *testing.T) {
 		},
 		{
 			name:     "異常系: 通貨作成エラー",
-			currency: currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 0),
+			currency: currency.MustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 0),
 			setupMock: func() {
 				mock.ExpectExec(`INSERT INTO users`).
 					WithArgs("user123").
@@ -236,3 +236,5 @@ func TestCurrencyRepository_Create(t *testing.T) {
 		})
 	}
 }
+
+

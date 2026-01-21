@@ -147,7 +147,10 @@ func (s *CodeRedemptionApplicationService) Redeem(ctx context.Context, req *Rede
 			var balanceBefore int64
 			if c == nil {
 				// 通貨が存在しない場合は作成
-				c = currency.NewCurrency(req.UserID, currencyType, 0, 0)
+				c, err = currency.NewCurrency(req.UserID, currencyType, 0, 0)
+				if err != nil {
+					return fmt.Errorf("failed to create currency entity: %w", err)
+				}
 				if err := s.currencyRepo.Create(ctx, c); err != nil {
 					return fmt.Errorf("failed to create currency: %w", err)
 				}
@@ -170,7 +173,7 @@ func (s *CodeRedemptionApplicationService) Redeem(ctx context.Context, req *Rede
 			}
 
 			// トランザクション履歴を記録
-			txn := transaction.NewTransaction(
+			txn, err := transaction.NewTransaction(
 				transactionID,
 				req.UserID,
 				transaction.TransactionTypeGrant,
@@ -184,6 +187,9 @@ func (s *CodeRedemptionApplicationService) Redeem(ctx context.Context, req *Rede
 					"redemption_id": redemptionID,
 				},
 			)
+			if err != nil {
+				return fmt.Errorf("failed to create transaction entity: %w", err)
+			}
 
 			if err := s.transactionRepo.Save(ctx, txn); err != nil {
 				return fmt.Errorf("failed to save transaction: %w", err)
@@ -320,7 +326,7 @@ func (s *CodeRedemptionApplicationService) CreateCode(ctx context.Context, req *
 	}
 
 	// ドメインエンティティの作成
-	rc := redemption_code.NewRedemptionCode(
+	rc, err := redemption_code.NewRedemptionCode(
 		req.Code,
 		codeType,
 		currencyType,
@@ -330,6 +336,11 @@ func (s *CodeRedemptionApplicationService) CreateCode(ctx context.Context, req *
 		req.ValidUntil,
 		req.Metadata,
 	)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		return nil, fmt.Errorf("failed to create redemption code entity: %w", err)
+	}
 
 	// リポジトリに保存
 	if err := s.redemptionCodeRepo.Create(ctx, rc); err != nil {

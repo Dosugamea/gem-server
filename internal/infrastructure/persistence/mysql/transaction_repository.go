@@ -194,7 +194,7 @@ func (r *TransactionRepository) FindByTransactionID(ctx context.Context, transac
 		requesterPtr = &requester.String
 	}
 
-	t := transaction.NewTransactionWithRequester(
+	t, err := transaction.NewTransactionWithRequester(
 		dbTransactionID,
 		dbUserID,
 		tt,
@@ -206,6 +206,9 @@ func (r *TransactionRepository) FindByTransactionID(ctx context.Context, transac
 		requesterPtr,
 		metadata,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to reconstruct transaction entity: %w", err)
+	}
 
 	if paymentRequestID.Valid {
 		t.SetPaymentRequestID(paymentRequestID.String)
@@ -301,7 +304,7 @@ func (r *TransactionRepository) FindByUserID(ctx context.Context, userID string,
 			requesterPtr = &requester.String
 		}
 
-		t := transaction.NewTransactionWithRequester(
+		t, err := transaction.NewTransactionWithRequester(
 			dbTransactionID,
 			dbUserID,
 			tt,
@@ -313,6 +316,9 @@ func (r *TransactionRepository) FindByUserID(ctx context.Context, userID string,
 			requesterPtr,
 			metadata,
 		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to reconstruct transaction entity: %w", err)
+		}
 
 		if paymentRequestID.Valid {
 			t.SetPaymentRequestID(paymentRequestID.String)
@@ -430,7 +436,7 @@ func (r *TransactionRepository) FindByPaymentRequestID(ctx context.Context, paym
 		requesterPtr = &requester.String
 	}
 
-	t := transaction.NewTransactionWithRequester(
+	t, err := transaction.NewTransactionWithRequester(
 		dbTransactionID,
 		dbUserID,
 		tt,
@@ -442,6 +448,9 @@ func (r *TransactionRepository) FindByPaymentRequestID(ctx context.Context, paym
 		requesterPtr,
 		metadata,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to reconstruct transaction entity: %w", err)
+	}
 
 	if paymentRequestIDValue.Valid {
 		t.SetPaymentRequestID(paymentRequestIDValue.String)

@@ -31,8 +31,8 @@ func TestCurrencyHandler_GetBalance(t *testing.T) {
 			name:        "正常系: 残高取得成功",
 			tokenUserID: "user123",
 			setupMock: func(mcr *MockCurrencyRepository) {
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 500, 1)
+				paidCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				freeCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypeFree, 500, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(paidCurrency, nil)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil)
 			},
@@ -114,8 +114,8 @@ func TestCurrencyHandler_GetBalanceAdmin(t *testing.T) {
 			name:   "正常系: 残高取得成功",
 			userID: "user123",
 			setupMock: func(mcr *MockCurrencyRepository) {
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 500, 1)
+				paidCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				freeCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypeFree, 500, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(paidCurrency, nil)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil)
 			},

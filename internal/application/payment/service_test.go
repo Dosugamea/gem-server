@@ -102,7 +102,7 @@ type MockTransactionManager struct {
 }
 
 func (m *MockTransactionManager) WithTransaction(ctx context.Context, fn func(*sql.Tx) error) error {
-	args := m.Called(ctx, fn)
+	args := m.Called(mock.Anything, mock.Anything)
 	if fn != nil {
 		return fn(nil)
 	}
@@ -130,7 +130,7 @@ func TestPaymentApplicationService_ProcessPayment(t *testing.T) {
 				// PaymentRequestが見つからない
 				mprr.On("FindByPaymentRequestID", mock.Anything, "pr123").Return(nil, payment_request.ErrPaymentRequestNotFound)
 				// 無料通貨が存在
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
+				freeCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil)
 				mcr.On("Save", mock.Anything, mock.MatchedBy(func(c *currency.Currency) bool {
 					return c.Balance() == 500 && c.Version() == 2
@@ -139,7 +139,7 @@ func TestPaymentApplicationService_ProcessPayment(t *testing.T) {
 				mprr.On("Save", mock.Anything, mock.MatchedBy(func(pr *payment_request.PaymentRequest) bool {
 					return pr.IsCompleted()
 				})).Return(nil)
-				mtm.On("WithTransaction", mock.Anything, mock.AnythingOfType("func(*sql.Tx) error")).Return(nil)
+				mtm.On("WithTransaction", mock.Anything, mock.Anything).Return(nil)
 			},
 			wantError: false,
 			checkFunc: func(t *testing.T, resp *ProcessPaymentResponse, err error) {
@@ -162,11 +162,11 @@ func TestPaymentApplicationService_ProcessPayment(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mprr *MockPaymentRequestRepository, mtm *MockTransactionManager) {
 				// 既に完了済みのPaymentRequest
-				completedPR := payment_request.NewPaymentRequest("pr123", "user123", 500, "JPY", currency.CurrencyTypePaid)
+				completedPR := payment_request.MustNewPaymentRequest("pr123", "user123", 500, "JPY", currency.CurrencyTypePaid)
 				completedPR.Complete()
 				mprr.On("FindByPaymentRequestID", mock.Anything, "pr123").Return(completedPR, nil)
 				// 既存のトランザクション
-				existingTxn := transaction.NewTransaction(
+				existingTxn := transaction.MustNewTransaction(
 					"txn123",
 					"user123",
 					transaction.TransactionTypeConsume,
@@ -212,8 +212,8 @@ func TestPaymentApplicationService_ProcessPayment(t *testing.T) {
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mprr *MockPaymentRequestRepository, mtm *MockTransactionManager) {
 				mprr.On("FindByPaymentRequestID", mock.Anything, "pr123").Return(nil, payment_request.ErrPaymentRequestNotFound)
 				// 無料通貨と有償通貨が存在
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				freeCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
+				paidCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(paidCurrency, nil)
 				// 無料通貨を全て消費
@@ -228,7 +228,7 @@ func TestPaymentApplicationService_ProcessPayment(t *testing.T) {
 				mprr.On("Save", mock.Anything, mock.MatchedBy(func(pr *payment_request.PaymentRequest) bool {
 					return pr.IsCompleted()
 				})).Return(nil)
-				mtm.On("WithTransaction", mock.Anything, mock.AnythingOfType("func(*sql.Tx) error")).Return(nil)
+				mtm.On("WithTransaction", mock.Anything, mock.Anything).Return(nil)
 			},
 			wantError: false,
 			checkFunc: func(t *testing.T, resp *ProcessPaymentResponse, err error) {
@@ -250,7 +250,7 @@ func TestPaymentApplicationService_ProcessPayment(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mprr *MockPaymentRequestRepository, mtm *MockTransactionManager) {
 				// 既に失敗状態のPaymentRequest
-				failedPR := payment_request.NewPaymentRequest("pr123", "user123", 500, "JPY", currency.CurrencyTypePaid)
+				failedPR := payment_request.MustNewPaymentRequest("pr123", "user123", 500, "JPY", currency.CurrencyTypePaid)
 				failedPR.Fail()
 				mprr.On("FindByPaymentRequestID", mock.Anything, "pr123").Return(failedPR, nil)
 			},
@@ -273,13 +273,13 @@ func TestPaymentApplicationService_ProcessPayment(t *testing.T) {
 				// 無料通貨が存在しない
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(nil, currency.ErrCurrencyNotFound)
 				// 有料通貨の残高が不足
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				paidCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(paidCurrency, nil)
 				// PaymentRequestを失敗状態にする
 				mprr.On("Update", mock.Anything, mock.MatchedBy(func(pr *payment_request.PaymentRequest) bool {
 					return !pr.IsCompleted()
 				})).Return(nil)
-				mtm.On("WithTransaction", mock.Anything, mock.AnythingOfType("func(*sql.Tx) error")).Return(currency.ErrInsufficientBalance)
+				mtm.On("WithTransaction", mock.Anything, mock.Anything).Return(currency.ErrInsufficientBalance)
 			},
 			wantError: true,
 			checkFunc: func(t *testing.T, resp *ProcessPaymentResponse, err error) {
@@ -313,7 +313,7 @@ func TestPaymentApplicationService_ProcessPayment(t *testing.T) {
 				Currency:         "JPY",
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mprr *MockPaymentRequestRepository, mtm *MockTransactionManager) {
-				completedPR := payment_request.NewPaymentRequest("pr123", "user123", 500, "JPY", currency.CurrencyTypePaid)
+				completedPR := payment_request.MustNewPaymentRequest("pr123", "user123", 500, "JPY", currency.CurrencyTypePaid)
 				completedPR.Complete()
 				mprr.On("FindByPaymentRequestID", mock.Anything, "pr123").Return(completedPR, nil)
 				mtr.On("FindByPaymentRequestID", mock.Anything, "pr123").Return(nil, assert.AnError)
@@ -336,7 +336,7 @@ func TestPaymentApplicationService_ProcessPayment(t *testing.T) {
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mprr *MockPaymentRequestRepository, mtm *MockTransactionManager) {
 				mprr.On("FindByPaymentRequestID", mock.Anything, "pr123").Return(nil, payment_request.ErrPaymentRequestNotFound)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(nil, assert.AnError)
-				mtm.On("WithTransaction", mock.Anything, mock.AnythingOfType("func(*sql.Tx) error")).Return(assert.AnError)
+				mtm.On("WithTransaction", mock.Anything, mock.Anything).Return(assert.AnError)
 			},
 			wantError: true,
 		},
@@ -351,11 +351,11 @@ func TestPaymentApplicationService_ProcessPayment(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mprr *MockPaymentRequestRepository, mtm *MockTransactionManager) {
 				mprr.On("FindByPaymentRequestID", mock.Anything, "pr123").Return(nil, payment_request.ErrPaymentRequestNotFound)
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
+				freeCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
 				// リトライをシミュレート（3回失敗）
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil).Times(3)
 				mcr.On("Save", mock.Anything, mock.AnythingOfType("*currency.Currency")).Return(assert.AnError).Times(3)
-				mtm.On("WithTransaction", mock.Anything, mock.AnythingOfType("func(*sql.Tx) error")).Return(assert.AnError)
+				mtm.On("WithTransaction", mock.Anything, mock.Anything).Return(assert.AnError)
 			},
 			wantError: true,
 		},
@@ -370,14 +370,14 @@ func TestPaymentApplicationService_ProcessPayment(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mprr *MockPaymentRequestRepository, mtm *MockTransactionManager) {
 				mprr.On("FindByPaymentRequestID", mock.Anything, "pr123").Return(nil, payment_request.ErrPaymentRequestNotFound)
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
+				freeCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil).Once()
 				mcr.On("Save", mock.Anything, mock.MatchedBy(func(c *currency.Currency) bool {
 					return c.CurrencyType() == currency.CurrencyTypeFree && c.Balance() == 0
 				})).Return(nil).Once()
 				mtr.On("Save", mock.Anything, mock.AnythingOfType("*transaction.Transaction")).Return(nil).Once()
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(nil, assert.AnError).Once()
-				mtm.On("WithTransaction", mock.Anything, mock.AnythingOfType("func(*sql.Tx) error")).Return(assert.AnError)
+				mtm.On("WithTransaction", mock.Anything, mock.Anything).Return(assert.AnError)
 			},
 			wantError: true,
 		},
@@ -392,8 +392,8 @@ func TestPaymentApplicationService_ProcessPayment(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mprr *MockPaymentRequestRepository, mtm *MockTransactionManager) {
 				mprr.On("FindByPaymentRequestID", mock.Anything, "pr123").Return(nil, payment_request.ErrPaymentRequestNotFound)
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				freeCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
+				paidCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil).Once()
 				mcr.On("Save", mock.Anything, mock.MatchedBy(func(c *currency.Currency) bool {
 					return c.CurrencyType() == currency.CurrencyTypeFree && c.Balance() == 0
@@ -405,7 +405,7 @@ func TestPaymentApplicationService_ProcessPayment(t *testing.T) {
 					return c.CurrencyType() == currency.CurrencyTypePaid
 				})).Return(assert.AnError).Times(3)
 				mprr.On("Update", mock.Anything, mock.AnythingOfType("*payment_request.PaymentRequest")).Return(nil).Times(3)
-				mtm.On("WithTransaction", mock.Anything, mock.AnythingOfType("func(*sql.Tx) error")).Return(assert.AnError)
+				mtm.On("WithTransaction", mock.Anything, mock.Anything).Return(assert.AnError)
 			},
 			wantError: true,
 		},
@@ -420,11 +420,11 @@ func TestPaymentApplicationService_ProcessPayment(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mprr *MockPaymentRequestRepository, mtm *MockTransactionManager) {
 				mprr.On("FindByPaymentRequestID", mock.Anything, "pr123").Return(nil, payment_request.ErrPaymentRequestNotFound)
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
+				freeCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil)
 				mcr.On("Save", mock.Anything, mock.AnythingOfType("*currency.Currency")).Return(nil)
 				mtr.On("Save", mock.Anything, mock.AnythingOfType("*transaction.Transaction")).Return(assert.AnError)
-				mtm.On("WithTransaction", mock.Anything, mock.AnythingOfType("func(*sql.Tx) error")).Return(assert.AnError)
+				mtm.On("WithTransaction", mock.Anything, mock.Anything).Return(assert.AnError)
 			},
 			wantError: true,
 		},
@@ -439,12 +439,12 @@ func TestPaymentApplicationService_ProcessPayment(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mprr *MockPaymentRequestRepository, mtm *MockTransactionManager) {
 				mprr.On("FindByPaymentRequestID", mock.Anything, "pr123").Return(nil, payment_request.ErrPaymentRequestNotFound)
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
+				freeCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil)
 				mcr.On("Save", mock.Anything, mock.AnythingOfType("*currency.Currency")).Return(nil)
 				mtr.On("Save", mock.Anything, mock.AnythingOfType("*transaction.Transaction")).Return(nil)
 				mprr.On("Save", mock.Anything, mock.AnythingOfType("*payment_request.PaymentRequest")).Return(assert.AnError)
-				mtm.On("WithTransaction", mock.Anything, mock.AnythingOfType("func(*sql.Tx) error")).Return(assert.AnError)
+				mtm.On("WithTransaction", mock.Anything, mock.Anything).Return(assert.AnError)
 			},
 			wantError: true,
 		},

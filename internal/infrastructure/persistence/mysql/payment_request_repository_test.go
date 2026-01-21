@@ -34,7 +34,10 @@ func TestPaymentRequestRepository_Save(t *testing.T) {
 		{
 			name: "正常系: PaymentRequestを保存",
 			paymentRequest: func() *payment_request.PaymentRequest {
-				pr := payment_request.NewPaymentRequest("pr123", "user123", 1000, "JPY", currency.CurrencyTypePaid)
+				pr, err := payment_request.NewPaymentRequest("pr123", "user123", 1000, "JPY", currency.CurrencyTypePaid)
+				if err != nil {
+					panic(err)
+				}
 				pr.SetPaymentMethodData(map[string]interface{}{"methodName": "test"})
 				pr.SetDetails(map[string]interface{}{"key": "value"})
 				return pr
@@ -60,7 +63,13 @@ func TestPaymentRequestRepository_Save(t *testing.T) {
 		},
 		{
 			name:           "異常系: DBエラー",
-			paymentRequest: payment_request.NewPaymentRequest("pr123", "user123", 1000, "JPY", currency.CurrencyTypePaid),
+			paymentRequest: func() *payment_request.PaymentRequest {
+				pr, err := payment_request.NewPaymentRequest("pr123", "user123", 1000, "JPY", currency.CurrencyTypePaid)
+				if err != nil {
+					panic(err)
+				}
+				return pr
+			}(),
 			setupMock: func() {
 				mock.ExpectExec(`INSERT INTO payment_requests`).
 					WillReturnError(sql.ErrConnDone)
@@ -194,7 +203,8 @@ func TestPaymentRequestRepository_Update(t *testing.T) {
 		tracer: otel.Tracer("test"),
 	}
 
-	pr := payment_request.NewPaymentRequest("pr123", "user123", 1000, "JPY", currency.CurrencyTypePaid)
+	pr, err := payment_request.NewPaymentRequest("pr123", "user123", 1000, "JPY", currency.CurrencyTypePaid)
+	require.NoError(t, err)
 	pr.Complete()
 
 	mock.ExpectExec(`INSERT INTO payment_requests`).

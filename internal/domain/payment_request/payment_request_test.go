@@ -6,16 +6,18 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewPaymentRequest(t *testing.T) {
-	pr := NewPaymentRequest(
+	pr, err := NewPaymentRequest(
 		"pr123",
 		"user123",
 		1000,
 		"JPY",
 		currency.CurrencyTypePaid,
 	)
+	require.NoError(t, err)
 
 	assert.Equal(t, "pr123", pr.PaymentRequestID())
 	assert.Equal(t, "user123", pr.UserID())
@@ -31,7 +33,7 @@ func TestNewPaymentRequest(t *testing.T) {
 }
 
 func TestPaymentRequest_SetPaymentMethodData(t *testing.T) {
-	pr := NewPaymentRequest(
+	pr := MustNewPaymentRequest(
 		"pr123",
 		"user123",
 		1000,
@@ -48,7 +50,7 @@ func TestPaymentRequest_SetPaymentMethodData(t *testing.T) {
 }
 
 func TestPaymentRequest_SetDetails(t *testing.T) {
-	pr := NewPaymentRequest(
+	pr := MustNewPaymentRequest(
 		"pr123",
 		"user123",
 		1000,
@@ -65,7 +67,7 @@ func TestPaymentRequest_SetDetails(t *testing.T) {
 }
 
 func TestPaymentRequest_SetResponse(t *testing.T) {
-	pr := NewPaymentRequest(
+	pr := MustNewPaymentRequest(
 		"pr123",
 		"user123",
 		1000,
@@ -82,7 +84,7 @@ func TestPaymentRequest_SetResponse(t *testing.T) {
 }
 
 func TestPaymentRequest_Complete(t *testing.T) {
-	pr := NewPaymentRequest(
+	pr := MustNewPaymentRequest(
 		"pr123",
 		"user123",
 		1000,
@@ -97,7 +99,7 @@ func TestPaymentRequest_Complete(t *testing.T) {
 }
 
 func TestPaymentRequest_Fail(t *testing.T) {
-	pr := NewPaymentRequest(
+	pr := MustNewPaymentRequest(
 		"pr123",
 		"user123",
 		1000,
@@ -112,7 +114,7 @@ func TestPaymentRequest_Fail(t *testing.T) {
 }
 
 func TestPaymentRequest_Cancel(t *testing.T) {
-	pr := NewPaymentRequest(
+	pr := MustNewPaymentRequest(
 		"pr123",
 		"user123",
 		1000,
@@ -127,7 +129,7 @@ func TestPaymentRequest_Cancel(t *testing.T) {
 }
 
 func TestPaymentRequest_IsPending(t *testing.T) {
-	pr := NewPaymentRequest(
+	pr := MustNewPaymentRequest(
 		"pr123",
 		"user123",
 		1000,

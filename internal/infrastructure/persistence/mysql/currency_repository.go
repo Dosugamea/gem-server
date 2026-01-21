@@ -78,7 +78,12 @@ func (r *CurrencyRepository) FindByUserIDAndType(ctx context.Context, userID str
 		return nil, fmt.Errorf("invalid currency type: %w", err)
 	}
 
-	return currency.NewCurrency(dbUserID, ct, balance, version), nil
+	c, err := currency.NewCurrency(dbUserID, ct, balance, version)
+	if err != nil {
+		return nil, fmt.Errorf("failed to reconstruct currency entity: %w", err)
+	}
+
+	return c, nil
 }
 
 // Save 通貨を保存（更新、楽観的ロック対応）

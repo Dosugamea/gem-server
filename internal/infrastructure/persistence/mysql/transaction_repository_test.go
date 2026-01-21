@@ -33,7 +33,7 @@ func TestTransactionRepository_Save(t *testing.T) {
 	}{
 		{
 			name: "正常系: トランザクションを保存",
-			transaction: transaction.NewTransaction(
+			transaction: mustNewTransaction(
 				"txn123",
 				"user123",
 				transaction.TransactionTypeGrant,
@@ -68,7 +68,7 @@ func TestTransactionRepository_Save(t *testing.T) {
 		{
 			name: "正常系: PaymentRequestIDありで保存",
 			transaction: func() *transaction.Transaction {
-				txn := transaction.NewTransaction(
+				txn := mustNewTransaction(
 					"txn123",
 					"user123",
 					transaction.TransactionTypeConsume,
@@ -106,7 +106,7 @@ func TestTransactionRepository_Save(t *testing.T) {
 		},
 		{
 			name: "異常系: DBエラー",
-			transaction: transaction.NewTransaction(
+			transaction: mustNewTransaction(
 				"txn123",
 				"user123",
 				transaction.TransactionTypeGrant,
@@ -404,4 +404,12 @@ func TestTransactionRepository_FindByPaymentRequestID(t *testing.T) {
 			assert.NoError(t, mock.ExpectationsWereMet())
 		})
 	}
+}
+
+func mustNewTransaction(transactionID, userID string, transactionType transaction.TransactionType, currencyType currency.CurrencyType, amount, balanceBefore, balanceAfter int64, status transaction.TransactionStatus, metadata map[string]interface{}) *transaction.Transaction {
+	tx, err := transaction.NewTransaction(transactionID, userID, transactionType, currencyType, amount, balanceBefore, balanceAfter, status, metadata)
+	if err != nil {
+		panic(err)
+	}
+	return tx
 }

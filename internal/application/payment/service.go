@@ -124,13 +124,17 @@ func (s *PaymentApplicationService) ProcessPayment(ctx context.Context, req *Pro
 	// PaymentRequestを作成または更新
 	var pr *payment_request.PaymentRequest
 	if existingPR == nil {
-		pr = payment_request.NewPaymentRequest(
+		var err error
+		pr, err = payment_request.NewPaymentRequest(
 			req.PaymentRequestID,
 			req.UserID,
 			req.Amount,
 			req.Currency,
 			currency.CurrencyTypePaid, // デフォルトは有料通貨
 		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create payment request: %w", err)
+		}
 		pr.SetPaymentMethodData(map[string]interface{}{
 			"methodName": req.MethodName,
 		})
@@ -206,7 +210,7 @@ func (s *PaymentApplicationService) ProcessPayment(ctx context.Context, req *Pro
 				remainingAmount -= freeConsumeAmount
 
 				// トランザクション履歴を記録
-				txn := transaction.NewTransaction(
+				txn, err := transaction.NewTransaction(
 					fmt.Sprintf("%s_free", transactionID),
 					req.UserID,
 					transaction.TransactionTypeConsume,
@@ -219,6 +223,9 @@ func (s *PaymentApplicationService) ProcessPayment(ctx context.Context, req *Pro
 						"payment_request_id": req.PaymentRequestID,
 					},
 				)
+				if err != nil {
+					return fmt.Errorf("failed to create transaction entity: %w", err)
+				}
 				txn.SetPaymentRequestID(req.PaymentRequestID)
 				if err := s.transactionRepo.Save(ctx, txn); err != nil {
 					return fmt.Errorf("failed to save transaction: %w", err)
@@ -293,7 +300,7 @@ func (s *PaymentApplicationService) ProcessPayment(ctx context.Context, req *Pro
 				totalConsumed += remainingAmount
 
 				// トランザクション履歴を記録
-				txn := transaction.NewTransaction(
+				txn, err := transaction.NewTransaction(
 					fmt.Sprintf("%s_paid", transactionID),
 					req.UserID,
 					transaction.TransactionTypeConsume,
@@ -306,6 +313,9 @@ func (s *PaymentApplicationService) ProcessPayment(ctx context.Context, req *Pro
 						"payment_request_id": req.PaymentRequestID,
 					},
 				)
+				if err != nil {
+					return fmt.Errorf("failed to create transaction entity: %w", err)
+				}
 				txn.SetPaymentRequestID(req.PaymentRequestID)
 				if err := s.transactionRepo.Save(ctx, txn); err != nil {
 					return fmt.Errorf("failed to save transaction: %w", err)

@@ -102,8 +102,8 @@ func TestCurrencyApplicationService_GetBalance(t *testing.T) {
 				UserID: "user123",
 			},
 			setupMocks: func(mcr *MockCurrencyRepository) {
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 500, 1)
+				paidCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				freeCurrency := mustNewCurrency("user123", currency.CurrencyTypeFree, 500, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(paidCurrency, nil)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil)
 			},
@@ -122,7 +122,7 @@ func TestCurrencyApplicationService_GetBalance(t *testing.T) {
 				UserID: "user123",
 			},
 			setupMocks: func(mcr *MockCurrencyRepository) {
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				paidCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(paidCurrency, nil)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(nil, currency.ErrCurrencyNotFound)
 			},
@@ -141,7 +141,7 @@ func TestCurrencyApplicationService_GetBalance(t *testing.T) {
 				UserID: "user123",
 			},
 			setupMocks: func(mcr *MockCurrencyRepository) {
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 500, 1)
+				freeCurrency := mustNewCurrency("user123", currency.CurrencyTypeFree, 500, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(nil, currency.ErrCurrencyNotFound)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil)
 			},
@@ -189,7 +189,7 @@ func TestCurrencyApplicationService_GetBalance(t *testing.T) {
 				UserID: "user123",
 			},
 			setupMocks: func(mcr *MockCurrencyRepository) {
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				paidCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(paidCurrency, nil)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(nil, errors.New("database error"))
 			},
@@ -257,7 +257,7 @@ func TestCurrencyApplicationService_Grant(t *testing.T) {
 				Metadata:     map[string]interface{}{"reason": "test"},
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mtm *MockTransactionManager) {
-				existingCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 500, 1)
+				existingCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 500, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(existingCurrency, nil)
 				mcr.On("Save", mock.Anything, mock.MatchedBy(func(c *currency.Currency) bool {
 					return c.Balance() == 1500 && c.Version() == 2
@@ -361,7 +361,7 @@ func TestCurrencyApplicationService_Grant(t *testing.T) {
 				Amount:       1000,
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mtm *MockTransactionManager) {
-				existingCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 500, 1)
+				existingCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 500, 1)
 				// リトライをシミュレート（3回失敗）
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(existingCurrency, nil).Times(3)
 				mcr.On("Save", mock.Anything, mock.AnythingOfType("*currency.Currency")).Return(assert.AnError).Times(3)
@@ -377,7 +377,7 @@ func TestCurrencyApplicationService_Grant(t *testing.T) {
 				Amount:       1000,
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mtm *MockTransactionManager) {
-				existingCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 500, 1)
+				existingCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 500, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(existingCurrency, nil)
 				mcr.On("Save", mock.Anything, mock.AnythingOfType("*currency.Currency")).Return(nil)
 				mtr.On("Save", mock.Anything, mock.AnythingOfType("*transaction.Transaction")).Return(assert.AnError)
@@ -446,7 +446,7 @@ func TestCurrencyApplicationService_Consume(t *testing.T) {
 				Amount:       500,
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mtm *MockTransactionManager) {
-				existingCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				existingCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(existingCurrency, nil)
 				mcr.On("Save", mock.Anything, mock.MatchedBy(func(c *currency.Currency) bool {
 					return c.Balance() == 500 && c.Version() == 2
@@ -470,7 +470,7 @@ func TestCurrencyApplicationService_Consume(t *testing.T) {
 				Amount:       2000,
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mtm *MockTransactionManager) {
-				existingCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				existingCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(existingCurrency, nil)
 				mtm.On("WithTransaction", mock.Anything, mock.AnythingOfType("func(*sql.Tx) error")).Return(currency.ErrInsufficientBalance)
 			},
@@ -514,7 +514,7 @@ func TestCurrencyApplicationService_Consume(t *testing.T) {
 				Amount:       500,
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mtm *MockTransactionManager) {
-				existingCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				existingCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
 				// リトライをシミュレート（3回失敗）
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(existingCurrency, nil).Times(3)
 				mcr.On("Save", mock.Anything, mock.AnythingOfType("*currency.Currency")).Return(assert.AnError).Times(3)
@@ -530,7 +530,7 @@ func TestCurrencyApplicationService_Consume(t *testing.T) {
 				Amount:       500,
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mtm *MockTransactionManager) {
-				existingCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				existingCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(existingCurrency, nil)
 				mcr.On("Save", mock.Anything, mock.AnythingOfType("*currency.Currency")).Return(nil)
 				mtr.On("Save", mock.Anything, mock.AnythingOfType("*transaction.Transaction")).Return(assert.AnError)
@@ -611,7 +611,7 @@ func TestCurrencyApplicationService_ConsumeWithPriority(t *testing.T) {
 				Amount:       500,
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mtm *MockTransactionManager) {
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
+				freeCurrency := mustNewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
 				// HasSufficientBalance用のモック
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil).Once()
 				// ConsumeWithPriority内でのFindByUserIDAndType用のモック
@@ -642,8 +642,8 @@ func TestCurrencyApplicationService_ConsumeWithPriority(t *testing.T) {
 				Amount:       1500,
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mtm *MockTransactionManager) {
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				freeCurrency := mustNewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
+				paidCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
 				// HasSufficientBalance用のモック
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil).Once()
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(paidCurrency, nil).Once()
@@ -683,8 +683,8 @@ func TestCurrencyApplicationService_ConsumeWithPriority(t *testing.T) {
 				Amount:       3000,
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mtm *MockTransactionManager) {
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				freeCurrency := mustNewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
+				paidCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
 				// HasSufficientBalance用のモック
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(paidCurrency, nil)
@@ -703,7 +703,7 @@ func TestCurrencyApplicationService_ConsumeWithPriority(t *testing.T) {
 				Amount:       500,
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mtm *MockTransactionManager) {
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				paidCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
 				// HasSufficientBalance用のモック
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(nil, currency.ErrCurrencyNotFound).Once()
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(paidCurrency, nil).Once()
@@ -768,7 +768,7 @@ func TestCurrencyApplicationService_ConsumeWithPriority(t *testing.T) {
 				Amount:       500,
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mtm *MockTransactionManager) {
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				paidCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
 				// HasSufficientBalance用のモック
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(nil, currency.ErrCurrencyNotFound).Once()
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(paidCurrency, nil).Once()
@@ -786,7 +786,7 @@ func TestCurrencyApplicationService_ConsumeWithPriority(t *testing.T) {
 				Amount:       1500,
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mtm *MockTransactionManager) {
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
+				freeCurrency := mustNewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
 				// HasSufficientBalance用のモック
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil).Once()
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(nil, currency.ErrCurrencyNotFound).Once()
@@ -809,7 +809,7 @@ func TestCurrencyApplicationService_ConsumeWithPriority(t *testing.T) {
 				Amount:       500,
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mtm *MockTransactionManager) {
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
+				freeCurrency := mustNewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
 				// HasSufficientBalance用のモック
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil).Once()
 				// ConsumeWithPriority内でのFindByUserIDAndType用のモック
@@ -863,4 +863,12 @@ func TestCurrencyApplicationService_ConsumeWithPriority(t *testing.T) {
 			}
 		})
 	}
+}
+
+func mustNewCurrency(userID string, currencyType currency.CurrencyType, balance int64, version int) *currency.Currency {
+	c, err := currency.NewCurrency(userID, currencyType, balance, version)
+	if err != nil {
+		panic(err)
+	}
+	return c
 }

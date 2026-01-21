@@ -160,7 +160,10 @@ func (s *CurrencyApplicationService) Grant(ctx context.Context, req *GrantReques
 			var balanceBefore int64
 			if c == nil {
 				// 通貨が存在しない場合は作成
-				c = currency.NewCurrency(req.UserID, currencyType, 0, 0)
+				c, err = currency.NewCurrency(req.UserID, currencyType, 0, 0)
+				if err != nil {
+					return fmt.Errorf("failed to create currency entity: %w", err)
+				}
 				if err := s.currencyRepo.Create(ctx, c); err != nil {
 					return fmt.Errorf("failed to create currency: %w", err)
 				}
@@ -188,7 +191,7 @@ func (s *CurrencyApplicationService) Grant(ctx context.Context, req *GrantReques
 			if req.Requester != "" {
 				requesterPtr = &req.Requester
 			}
-			txn := transaction.NewTransactionWithRequester(
+			txn, err := transaction.NewTransactionWithRequester(
 				transactionID,
 				req.UserID,
 				transaction.TransactionTypeGrant,
@@ -200,6 +203,9 @@ func (s *CurrencyApplicationService) Grant(ctx context.Context, req *GrantReques
 				requesterPtr,
 				req.Metadata,
 			)
+			if err != nil {
+				return fmt.Errorf("failed to create transaction entity: %w", err)
+			}
 
 			if err := s.transactionRepo.Save(ctx, txn); err != nil {
 				return fmt.Errorf("failed to save transaction: %w", err)
@@ -318,7 +324,7 @@ func (s *CurrencyApplicationService) Consume(ctx context.Context, req *ConsumeRe
 			if req.Requester != "" {
 				requesterPtr = &req.Requester
 			}
-			txn := transaction.NewTransactionWithRequester(
+			txn, err := transaction.NewTransactionWithRequester(
 				transactionID,
 				req.UserID,
 				transaction.TransactionTypeConsume,
@@ -330,6 +336,9 @@ func (s *CurrencyApplicationService) Consume(ctx context.Context, req *ConsumeRe
 				requesterPtr,
 				req.Metadata,
 			)
+			if err != nil {
+				return fmt.Errorf("failed to create transaction entity: %w", err)
+			}
 
 			if err := s.transactionRepo.Save(ctx, txn); err != nil {
 				return fmt.Errorf("failed to save transaction: %w", err)
@@ -477,7 +486,7 @@ func (s *CurrencyApplicationService) ConsumeWithPriority(ctx context.Context, re
 				if req.Requester != "" {
 					requesterPtr = &req.Requester
 				}
-				txn := transaction.NewTransactionWithRequester(
+				txn, err := transaction.NewTransactionWithRequester(
 					fmt.Sprintf("%s_free", transactionID),
 					req.UserID,
 					transaction.TransactionTypeConsume,
@@ -489,6 +498,9 @@ func (s *CurrencyApplicationService) ConsumeWithPriority(ctx context.Context, re
 					requesterPtr,
 					req.Metadata,
 				)
+				if err != nil {
+					return fmt.Errorf("failed to create transaction entity: %w", err)
+				}
 				if err := s.transactionRepo.Save(ctx, txn); err != nil {
 					return fmt.Errorf("failed to save transaction: %w", err)
 				}
@@ -553,7 +565,7 @@ func (s *CurrencyApplicationService) ConsumeWithPriority(ctx context.Context, re
 				if req.Requester != "" {
 					requesterPtr = &req.Requester
 				}
-				txn := transaction.NewTransactionWithRequester(
+				txn, err := transaction.NewTransactionWithRequester(
 					fmt.Sprintf("%s_paid", transactionID),
 					req.UserID,
 					transaction.TransactionTypeConsume,
@@ -565,6 +577,9 @@ func (s *CurrencyApplicationService) ConsumeWithPriority(ctx context.Context, re
 					requesterPtr,
 					req.Metadata,
 				)
+				if err != nil {
+					return fmt.Errorf("failed to create transaction entity: %w", err)
+				}
 				if err := s.transactionRepo.Save(ctx, txn); err != nil {
 					return fmt.Errorf("failed to save transaction: %w", err)
 				}

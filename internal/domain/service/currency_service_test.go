@@ -47,8 +47,8 @@ func TestCurrencyService_GetTotalBalance(t *testing.T) {
 			name:   "正常系: 有償・無償通貨両方存在",
 			userID: "user123",
 			setupMocks: func(mcr *MockCurrencyRepository) {
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 500, 1)
+				paidCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				freeCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypeFree, 500, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(paidCurrency, nil)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil)
 			},
@@ -101,7 +101,7 @@ func TestCurrencyService_HasSufficientBalance(t *testing.T) {
 			userID: "user123",
 			amount: 500,
 			setupMocks: func(mcr *MockCurrencyRepository) {
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
+				freeCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil)
 			},
 			want:      true,
@@ -112,8 +112,8 @@ func TestCurrencyService_HasSufficientBalance(t *testing.T) {
 			userID: "user123",
 			amount: 1500,
 			setupMocks: func(mcr *MockCurrencyRepository) {
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				freeCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
+				paidCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(paidCurrency, nil)
 			},
@@ -125,8 +125,8 @@ func TestCurrencyService_HasSufficientBalance(t *testing.T) {
 			userID: "user123",
 			amount: 3000,
 			setupMocks: func(mcr *MockCurrencyRepository) {
-				freeCurrency := currency.NewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
-				paidCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
+				freeCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypeFree, 1000, 1)
+				paidCurrency := currency.MustNewCurrency("user123", currency.CurrencyTypePaid, 1000, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypeFree).Return(freeCurrency, nil)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(paidCurrency, nil)
 			},

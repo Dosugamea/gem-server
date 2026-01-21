@@ -65,7 +65,7 @@ func TestHistoryApplicationService_GetTransactionHistory(t *testing.T) {
 			},
 			setupMocks: func(mtr *MockTransactionRepository) {
 				transactions := []*transaction.Transaction{
-					transaction.NewTransaction(
+					mustNewTransaction(
 						"txn1",
 						"user123",
 						transaction.TransactionTypeGrant,
@@ -76,7 +76,7 @@ func TestHistoryApplicationService_GetTransactionHistory(t *testing.T) {
 						transaction.TransactionStatusCompleted,
 						nil,
 					),
-					transaction.NewTransaction(
+					mustNewTransaction(
 						"txn2",
 						"user123",
 						transaction.TransactionTypeConsume,
@@ -109,7 +109,7 @@ func TestHistoryApplicationService_GetTransactionHistory(t *testing.T) {
 			},
 			setupMocks: func(mtr *MockTransactionRepository) {
 				transactions := []*transaction.Transaction{
-					transaction.NewTransaction(
+					mustNewTransaction(
 						"txn1",
 						"user123",
 						transaction.TransactionTypeGrant,
@@ -120,7 +120,7 @@ func TestHistoryApplicationService_GetTransactionHistory(t *testing.T) {
 						transaction.TransactionStatusCompleted,
 						nil,
 					),
-					transaction.NewTransaction(
+					mustNewTransaction(
 						"txn2",
 						"user123",
 						transaction.TransactionTypeGrant,
@@ -151,7 +151,7 @@ func TestHistoryApplicationService_GetTransactionHistory(t *testing.T) {
 			},
 			setupMocks: func(mtr *MockTransactionRepository) {
 				transactions := []*transaction.Transaction{
-					transaction.NewTransaction(
+					mustNewTransaction(
 						"txn1",
 						"user123",
 						transaction.TransactionTypeGrant,
@@ -162,7 +162,7 @@ func TestHistoryApplicationService_GetTransactionHistory(t *testing.T) {
 						transaction.TransactionStatusCompleted,
 						nil,
 					),
-					transaction.NewTransaction(
+					mustNewTransaction(
 						"txn2",
 						"user123",
 						transaction.TransactionTypeConsume,
@@ -262,4 +262,12 @@ func TestHistoryApplicationService_GetTransactionHistory(t *testing.T) {
 			}
 		})
 	}
+}
+
+func mustNewTransaction(transactionID, userID string, transactionType transaction.TransactionType, currencyType currency.CurrencyType, amount, balanceBefore, balanceAfter int64, status transaction.TransactionStatus, metadata map[string]interface{}) *transaction.Transaction {
+	tx, err := transaction.NewTransaction(transactionID, userID, transactionType, currencyType, amount, balanceBefore, balanceAfter, status, metadata)
+	if err != nil {
+		panic(err)
+	}
+	return tx
 }

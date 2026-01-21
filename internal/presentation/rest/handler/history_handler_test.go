@@ -34,7 +34,7 @@ func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 			queryParams: map[string]string{},
 			setupMock: func(mtr *MockTransactionRepository) {
 				txns := []*transaction.Transaction{
-					transaction.NewTransaction(
+					mustNewTransaction(
 						"txn1",
 						"user123",
 						transaction.TransactionTypeGrant,
@@ -45,7 +45,7 @@ func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 						transaction.TransactionStatusCompleted,
 						map[string]interface{}{},
 					),
-					transaction.NewTransaction(
+					mustNewTransaction(
 						"txn2",
 						"user123",
 						transaction.TransactionTypeConsume,
@@ -100,7 +100,7 @@ func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 			},
 			setupMock: func(mtr *MockTransactionRepository) {
 				txns := []*transaction.Transaction{
-					transaction.NewTransaction(
+					mustNewTransaction(
 						"txn1",
 						"user123",
 						transaction.TransactionTypeGrant,
@@ -124,7 +124,7 @@ func TestHistoryHandler_GetTransactionHistory(t *testing.T) {
 			},
 			setupMock: func(mtr *MockTransactionRepository) {
 				txns := []*transaction.Transaction{
-					transaction.NewTransaction(
+					mustNewTransaction(
 						"txn1",
 						"user123",
 						transaction.TransactionTypeGrant,
@@ -263,7 +263,7 @@ func TestHistoryHandler_GetTransactionHistoryAdmin(t *testing.T) {
 			queryParams: map[string]string{},
 			setupMock: func(mtr *MockTransactionRepository) {
 				txns := []*transaction.Transaction{
-					transaction.NewTransaction(
+					mustNewTransaction(
 						"txn1",
 						"user123",
 						transaction.TransactionTypeGrant,
@@ -339,4 +339,12 @@ func TestHistoryHandler_GetTransactionHistoryAdmin(t *testing.T) {
 			}
 		})
 	}
+}
+
+func mustNewTransaction(transactionID, userID string, transactionType transaction.TransactionType, currencyType currency.CurrencyType, amount, balanceBefore, balanceAfter int64, status transaction.TransactionStatus, metadata map[string]interface{}) *transaction.Transaction {
+	tx, err := transaction.NewTransaction(transactionID, userID, transactionType, currencyType, amount, balanceBefore, balanceAfter, status, metadata)
+	if err != nil {
+		panic(err)
+	}
+	return tx
 }

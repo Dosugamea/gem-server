@@ -119,7 +119,7 @@ func TestRedemptionCodeRepository_Update(t *testing.T) {
 			code: func() *redemption_code.RedemptionCode {
 				codeType, _ := redemption_code.NewCodeType("promotion")
 				status, _ := redemption_code.NewCodeStatus("active")
-				rc := redemption_code.NewRedemptionCode(
+				rc := redemption_code.MustNewRedemptionCode(
 					"TESTCODE123",
 					codeType,
 					currency.CurrencyTypePaid,
@@ -145,7 +145,7 @@ func TestRedemptionCodeRepository_Update(t *testing.T) {
 			code: func() *redemption_code.RedemptionCode {
 				codeType, _ := redemption_code.NewCodeType("promotion")
 				status, _ := redemption_code.NewCodeStatus("active")
-				rc := redemption_code.NewRedemptionCode(
+				rc := redemption_code.MustNewRedemptionCode(
 					"TESTCODE123",
 					codeType,
 					currency.CurrencyTypePaid,
@@ -303,7 +303,7 @@ func TestRedemptionCodeRepository_Create(t *testing.T) {
 			name: "正常系: コードを作成",
 			code: func() *redemption_code.RedemptionCode {
 				codeType, _ := redemption_code.NewCodeType("promotion")
-				rc := redemption_code.NewRedemptionCode(
+				rc := redemption_code.MustNewRedemptionCode(
 					"NEWCODE123",
 					codeType,
 					currency.CurrencyTypePaid,
@@ -339,7 +339,7 @@ func TestRedemptionCodeRepository_Create(t *testing.T) {
 			name: "正常系: メタデータなしでコードを作成",
 			code: func() *redemption_code.RedemptionCode {
 				codeType, _ := redemption_code.NewCodeType("gift")
-				rc := redemption_code.NewRedemptionCode(
+				rc := redemption_code.MustNewRedemptionCode(
 					"GIFTCODE456",
 					codeType,
 					currency.CurrencyTypeFree,
@@ -375,7 +375,7 @@ func TestRedemptionCodeRepository_Create(t *testing.T) {
 			name: "異常系: コードが既に存在",
 			code: func() *redemption_code.RedemptionCode {
 				codeType, _ := redemption_code.NewCodeType("promotion")
-				rc := redemption_code.NewRedemptionCode(
+				rc := redemption_code.MustNewRedemptionCode(
 					"DUPLICATECODE",
 					codeType,
 					currency.CurrencyTypePaid,
@@ -398,7 +398,7 @@ func TestRedemptionCodeRepository_Create(t *testing.T) {
 			name: "異常系: DBエラー",
 			code: func() *redemption_code.RedemptionCode {
 				codeType, _ := redemption_code.NewCodeType("promotion")
-				rc := redemption_code.NewRedemptionCode(
+				rc := redemption_code.MustNewRedemptionCode(
 					"ERRORCODE",
 					codeType,
 					currency.CurrencyTypePaid,

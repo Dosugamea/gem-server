@@ -1,6 +1,7 @@
 package redemption_code
 
 import (
+	"errors"
 	"gem-server/internal/domain/currency"
 	"time"
 )
@@ -31,7 +32,14 @@ func NewRedemptionCode(
 	validFrom time.Time,
 	validUntil time.Time,
 	metadata map[string]interface{},
-) *RedemptionCode {
+) (*RedemptionCode, error) {
+	if code == "" {
+		return nil, errors.New("invalid code")
+	}
+	if amount <= 0 {
+		return nil, errors.New("invalid amount")
+	}
+
 	now := time.Now()
 	return &RedemptionCode{
 		code:         code,
@@ -46,7 +54,7 @@ func NewRedemptionCode(
 		metadata:     metadata,
 		createdAt:    now,
 		updatedAt:    now,
-	}
+	}, nil
 }
 
 // Code コードを返す
@@ -166,4 +174,22 @@ func (rc *RedemptionCode) SetCurrentUses(uses int) {
 // SetStatus ステータスを設定（リポジトリから読み込んだ際に使用）
 func (rc *RedemptionCode) SetStatus(status CodeStatus) {
 	rc.status = status
+}
+
+// MustNewRedemptionCode テスト用ヘルパー: NewRedemptionCodeを呼び出し、エラーが発生した場合はpanicする
+func MustNewRedemptionCode(
+	code string,
+	codeType CodeType,
+	currencyType currency.CurrencyType,
+	amount int64,
+	maxUses int,
+	validFrom time.Time,
+	validUntil time.Time,
+	metadata map[string]interface{},
+) *RedemptionCode {
+	rc, err := NewRedemptionCode(code, codeType, currencyType, amount, maxUses, validFrom, validUntil, metadata)
+	if err != nil {
+		panic(err)
+	}
+	return rc
 }

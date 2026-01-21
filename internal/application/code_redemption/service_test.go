@@ -150,7 +150,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
 				// コードを取得
 				codeType, _ := redemption_code.NewCodeType("promotion")
-				code := redemption_code.NewRedemptionCode(
+				code := redemption_code.MustNewRedemptionCode(
 					"TESTCODE123",
 					codeType,
 					currency.CurrencyTypePaid,
@@ -166,7 +166,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 				// コードを更新
 				mrcr.On("Update", mock.Anything, mock.AnythingOfType("*redemption_code.RedemptionCode")).Return(nil)
 				// 既存の通貨に付与
-				existingCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 500, 1)
+				existingCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 500, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(existingCurrency, nil)
 				mcr.On("Save", mock.Anything, mock.MatchedBy(func(c *currency.Currency) bool {
 					return c.Balance() == 1500 && c.Version() == 2
@@ -197,7 +197,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
 				codeType, _ := redemption_code.NewCodeType("promotion")
-				code := redemption_code.NewRedemptionCode(
+				code := redemption_code.MustNewRedemptionCode(
 					"TESTCODE123",
 					codeType,
 					currency.CurrencyTypeFree,
@@ -254,7 +254,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
 				// 無効なコード（期限切れ）
 				codeType, _ := redemption_code.NewCodeType("promotion")
-				code := redemption_code.NewRedemptionCode(
+				code := redemption_code.MustNewRedemptionCode(
 					"TESTCODE123",
 					codeType,
 					currency.CurrencyTypePaid,
@@ -280,7 +280,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
 				codeType, _ := redemption_code.NewCodeType("promotion")
-				code := redemption_code.NewRedemptionCode(
+				code := redemption_code.MustNewRedemptionCode(
 					"TESTCODE123",
 					codeType,
 					currency.CurrencyTypePaid,
@@ -307,7 +307,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
 				codeType, _ := redemption_code.NewCodeType("promotion")
-				code := redemption_code.NewRedemptionCode(
+				code := redemption_code.MustNewRedemptionCode(
 					"TESTCODE123",
 					codeType,
 					currency.CurrencyTypePaid,
@@ -351,7 +351,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
 				codeType, _ := redemption_code.NewCodeType("promotion")
-				code := redemption_code.NewRedemptionCode(
+				code := redemption_code.MustNewRedemptionCode(
 					"TESTCODE123",
 					codeType,
 					currency.CurrencyTypePaid,
@@ -378,7 +378,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
 				codeType, _ := redemption_code.NewCodeType("promotion")
-				code := redemption_code.NewRedemptionCode(
+				code := redemption_code.MustNewRedemptionCode(
 					"TESTCODE123",
 					codeType,
 					currency.CurrencyTypePaid,
@@ -403,7 +403,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
 				codeType, _ := redemption_code.NewCodeType("promotion")
-				code := redemption_code.NewRedemptionCode(
+				code := redemption_code.MustNewRedemptionCode(
 					"TESTCODE123",
 					codeType,
 					currency.CurrencyTypeFree,
@@ -430,7 +430,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
 				codeType, _ := redemption_code.NewCodeType("promotion")
-				code := redemption_code.NewRedemptionCode(
+				code := redemption_code.MustNewRedemptionCode(
 					"TESTCODE123",
 					codeType,
 					currency.CurrencyTypePaid,
@@ -443,7 +443,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 				mrcr.On("FindByCode", mock.Anything, "TESTCODE123").Return(code, nil)
 				mrcr.On("HasUserRedeemed", mock.Anything, "TESTCODE123", "user123").Return(false, nil)
 				mrcr.On("Update", mock.Anything, mock.AnythingOfType("*redemption_code.RedemptionCode")).Return(nil)
-				existingCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 500, 1)
+				existingCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 500, 1)
 				// リトライをシミュレート（3回失敗）
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(existingCurrency, nil).Times(3)
 				mcr.On("Save", mock.Anything, mock.AnythingOfType("*currency.Currency")).Return(assert.AnError).Times(3)
@@ -459,7 +459,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
 				codeType, _ := redemption_code.NewCodeType("promotion")
-				code := redemption_code.NewRedemptionCode(
+				code := redemption_code.MustNewRedemptionCode(
 					"TESTCODE123",
 					codeType,
 					currency.CurrencyTypePaid,
@@ -472,7 +472,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 				mrcr.On("FindByCode", mock.Anything, "TESTCODE123").Return(code, nil)
 				mrcr.On("HasUserRedeemed", mock.Anything, "TESTCODE123", "user123").Return(false, nil)
 				mrcr.On("Update", mock.Anything, mock.AnythingOfType("*redemption_code.RedemptionCode")).Return(nil)
-				existingCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 500, 1)
+				existingCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 500, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(existingCurrency, nil)
 				mcr.On("Save", mock.Anything, mock.AnythingOfType("*currency.Currency")).Return(nil)
 				mtr.On("Save", mock.Anything, mock.AnythingOfType("*transaction.Transaction")).Return(assert.AnError)
@@ -488,7 +488,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
 				codeType, _ := redemption_code.NewCodeType("promotion")
-				code := redemption_code.NewRedemptionCode(
+				code := redemption_code.MustNewRedemptionCode(
 					"TESTCODE123",
 					codeType,
 					currency.CurrencyTypePaid,
@@ -501,7 +501,7 @@ func TestCodeRedemptionApplicationService_Redeem(t *testing.T) {
 				mrcr.On("FindByCode", mock.Anything, "TESTCODE123").Return(code, nil)
 				mrcr.On("HasUserRedeemed", mock.Anything, "TESTCODE123", "user123").Return(false, nil)
 				mrcr.On("Update", mock.Anything, mock.AnythingOfType("*redemption_code.RedemptionCode")).Return(nil)
-				existingCurrency := currency.NewCurrency("user123", currency.CurrencyTypePaid, 500, 1)
+				existingCurrency := mustNewCurrency("user123", currency.CurrencyTypePaid, 500, 1)
 				mcr.On("FindByUserIDAndType", mock.Anything, "user123", currency.CurrencyTypePaid).Return(existingCurrency, nil)
 				mcr.On("Save", mock.Anything, mock.AnythingOfType("*currency.Currency")).Return(nil)
 				mtr.On("Save", mock.Anything, mock.AnythingOfType("*transaction.Transaction")).Return(nil)
@@ -785,7 +785,7 @@ func TestCodeRedemptionApplicationService_DeleteCode(t *testing.T) {
 				Code: "DELETECODE123",
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
-				code := redemption_code.NewRedemptionCode(
+				code := redemption_code.MustNewRedemptionCode(
 					"DELETECODE123",
 					redemption_code.CodeTypePromotion,
 					currency.CurrencyTypePaid,
@@ -835,7 +835,7 @@ func TestCodeRedemptionApplicationService_DeleteCode(t *testing.T) {
 				Code: "USEDCODE",
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
-				code := redemption_code.NewRedemptionCode(
+				code := redemption_code.MustNewRedemptionCode(
 					"USEDCODE",
 					redemption_code.CodeTypePromotion,
 					currency.CurrencyTypePaid,
@@ -923,7 +923,7 @@ func TestCodeRedemptionApplicationService_GetCode(t *testing.T) {
 				Code: "GETCODE123",
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
-				code := redemption_code.NewRedemptionCode(
+				code := redemption_code.MustNewRedemptionCode(
 					"GETCODE123",
 					redemption_code.CodeTypePromotion,
 					currency.CurrencyTypePaid,
@@ -1042,7 +1042,7 @@ func TestCodeRedemptionApplicationService_ListCodes(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
 				codes := []*redemption_code.RedemptionCode{
-					redemption_code.NewRedemptionCode(
+					redemption_code.MustNewRedemptionCode(
 						"CODE1",
 						redemption_code.CodeTypePromotion,
 						currency.CurrencyTypePaid,
@@ -1052,7 +1052,7 @@ func TestCodeRedemptionApplicationService_ListCodes(t *testing.T) {
 						time.Now().Add(24*time.Hour),
 						map[string]interface{}{},
 					),
-					redemption_code.NewRedemptionCode(
+					redemption_code.MustNewRedemptionCode(
 						"CODE2",
 						redemption_code.CodeTypeGift,
 						currency.CurrencyTypeFree,
@@ -1084,7 +1084,7 @@ func TestCodeRedemptionApplicationService_ListCodes(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
 				codes := []*redemption_code.RedemptionCode{
-					redemption_code.NewRedemptionCode(
+					redemption_code.MustNewRedemptionCode(
 						"ACTIVECODE",
 						redemption_code.CodeTypePromotion,
 						currency.CurrencyTypePaid,
@@ -1094,7 +1094,7 @@ func TestCodeRedemptionApplicationService_ListCodes(t *testing.T) {
 						time.Now().Add(24*time.Hour),
 						map[string]interface{}{},
 					),
-					redemption_code.NewRedemptionCode(
+					redemption_code.MustNewRedemptionCode(
 						"EXPIREDCODE",
 						redemption_code.CodeTypePromotion,
 						currency.CurrencyTypePaid,
@@ -1127,7 +1127,7 @@ func TestCodeRedemptionApplicationService_ListCodes(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
 				codes := []*redemption_code.RedemptionCode{
-					redemption_code.NewRedemptionCode(
+					redemption_code.MustNewRedemptionCode(
 						"PROMOCODE",
 						redemption_code.CodeTypePromotion,
 						currency.CurrencyTypePaid,
@@ -1137,7 +1137,7 @@ func TestCodeRedemptionApplicationService_ListCodes(t *testing.T) {
 						time.Now().Add(24*time.Hour),
 						map[string]interface{}{},
 					),
-					redemption_code.NewRedemptionCode(
+					redemption_code.MustNewRedemptionCode(
 						"GIFTCODE",
 						redemption_code.CodeTypeGift,
 						currency.CurrencyTypeFree,
@@ -1167,7 +1167,7 @@ func TestCodeRedemptionApplicationService_ListCodes(t *testing.T) {
 			},
 			setupMocks: func(mcr *MockCurrencyRepository, mtr *MockTransactionRepository, mrcr *MockRedemptionCodeRepository, mtm *MockTransactionManager) {
 				codes := []*redemption_code.RedemptionCode{
-					redemption_code.NewRedemptionCode(
+					redemption_code.MustNewRedemptionCode(
 						"CODE11",
 						redemption_code.CodeTypePromotion,
 						currency.CurrencyTypePaid,
@@ -1295,4 +1295,12 @@ func TestCodeRedemptionApplicationService_ListCodes(t *testing.T) {
 			}
 		})
 	}
+}
+
+func mustNewCurrency(userID string, currencyType currency.CurrencyType, balance int64, version int) *currency.Currency {
+	c, err := currency.NewCurrency(userID, currencyType, balance, version)
+	if err != nil {
+		panic(err)
+	}
+	return c
 }
